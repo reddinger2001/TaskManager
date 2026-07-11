@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskManager{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0a0e17',
+                        surface: '#0d1220',
+                        panel: '#111827',
+                        border: '#1a2332',
+                        accent: '#00e5ff',
+                        accent2: '#7c4dff',
+                        dim: '#3a4a5c',
+                        text: '#c8d6e5',
+                        muted: '#4a5568',
+                    },
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        * { scrollbar-width: thin; scrollbar-color: #1a2332 transparent; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1a2332; border-radius: 2px; }
+
+        body { font-family: 'Inter', system-ui, sans-serif; }
+
+        .glow-accent { box-shadow: 0 0 20px -5px rgba(0, 229, 255, 0.15); }
+        .glow-accent2 { box-shadow: 0 0 20px -5px rgba(124, 77, 255, 0.15); }
+        .glow-red { box-shadow: 0 0 20px -5px rgba(255, 82, 82, 0.15); }
+
+        .card-hover { transition: all 0.15s ease; }
+        .card-hover:hover { border-color: #00e5ff30; background: #0d1220ee; }
+
+        .mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7) sepia(1) saturate(3) hue-rotate(180deg);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-bg text-text min-h-screen">
+
+<!-- Header -->
+<header class="border-b border-border sticky top-0 z-40 bg-bg/90 backdrop-blur-md">
+    <div class="max-w-[1400px] mx-auto px-6">
+        <div class="flex items-center justify-between h-[52px]">
+            <div class="flex items-center gap-8">
+                <h1 class="text-base font-bold tracking-widest mono" style="color: #00e5ff;">
+                    <span style="opacity: 0.4;">&#9632;</span> TASKMANAGER
+                </h1>
+                <nav class="flex items-center gap-1">
+                    <a href="/" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors {% if request.endpoint == 'main.index' %}text-accent border-b-2 border-accent{% endif %}">Dashboard</a>
+                    <a href="/projects" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Projects</a>
+                    <a href="/board" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Board</a>
+                    <a href="/calendar" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Calendar</a>
+                    <a href="/gantt" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Gantt</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <form action="/search" method="get" class="relative">
+                    <input type="text" name="q" placeholder="Search..." class="w-56 pl-8 pr-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </form>
+                <button class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+                    + New
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main -->
+<main class="max-w-[1400px] mx-auto px-6 py-6">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for category, message in messages %}
+                    <div class="px-4 py-3 rounded-lg border text-sm mono {{ 'bg-red-500/10 border-red-500/30 text-red-400' if category == 'error' else 'bg-accent/10 border-accent/20 text-accent' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

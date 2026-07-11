@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — TaskManager{% endblock %}
+
+{% block content %}
+<!-- Summary Bar -->
+<div class="grid grid-cols-5 gap-3 mb-8">
+    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">On Fire</div>
+        <div class="text-2xl font-bold mono" style="color: #ff5252;">0</div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Delegated</div>
+        <div class="text-2xl font-bold mono" style="color: #7c4dff;">0</div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Active</div>
+        <div class="text-2xl font-bold mono" style="color: #00e5ff;">0</div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Backlog</div>
+        <div class="text-2xl font-bold mono" style="color: #6b7280;">0</div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Inbox</div>
+        <div class="text-2xl font-bold mono" style="color: #ffc107;">0</div>
+    </div>
+</div>
+
+<!-- Empty state -->
+<div class="flex flex-col items-center justify-center py-24 text-center">
+    <svg class="w-16 h-16 text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+    <h2 class="text-lg font-semibold text-text mb-2">No tasks yet</h2>
+    <p class="text-sm text-muted max-w-md">Click the <span class="mono text-accent">+ New</span> button to capture your first thought or create a task.</p>
+</div>
+{% endblock %}
