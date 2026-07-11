@@ -28,4 +28,7 @@ def create_app():
     from app.views.main import main_bp
     app.register_blueprint(main_bp)
 
+    from app.views.projects import projects_bp
+    app.register_blueprint(projects_bp)
+
     return app

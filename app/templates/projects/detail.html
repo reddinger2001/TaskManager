@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — TaskManager{% endblock %}
+
+{% block content %}
+<div x-data="{ showEdit: false, showDelete: false }">
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        {% if project.parent_id %}
+        <a href="/projects/{{ project.parent_id }}" class="text-xs mono text-muted hover:text-accent transition-colors">
+            ← Parent
+        </a>
+        {% endif %}
+        <h2 class="text-lg font-bold mono tracking-wider text-text">{{ project.name }}</h2>
+    </div>
+    <div class="flex items-center gap-2">
+        <button @click="showEdit = true"
+                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+            Edit
+        </button>
+        <button @click="showDelete = true"
+                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-red-400/70 border border-red-500/20 rounded hover:text-red-400 transition-colors">
+            Delete
+        </button>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div x-show="showEdit" x-cloak
+     x-data="{
+         name: '{{ project.name | e }}',
+         description: '{{ (project.description or '') | e | replace('\'', '\\\'') }}',
+         color: '{{ project.color or '#1a2332' }}',
+         parent_id: {{ project.parent_id | tojson }},
+         saveProject() {
+             fetch('/projects/{{ project.id }}', {
+                 method: 'PATCH',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ name, description, color, parent_id })
+             }).then(r => r.json()).then(() => location.reload());
+         }
+     }"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+     @keydown.escape.window="showEdit = false">
+    <div class="bg-panel border border-border rounded-lg w-full max-w-md p-6 glow-accent2">
+        <h3 class="text-sm font-bold mono uppercase tracking-wider text-accent2 mb-4">Edit Project</h3>
+        <form @submit.prevent="saveProject()">
+            <label class="block text-xs mono text-muted mb-1">Name *</label>
+            <input x-model="name" required type="text"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent2/40 mb-4">
+
+            <label class="block text-xs mono text-muted mb-1">Description</label>
+            <textarea x-model="description" rows="3"
+                      class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent2/40 mb-4"></textarea>
+
+            <label class="block text-xs mono text-muted mb-1">Color</label>
+            <div class="flex items-center gap-3 mb-4">
+                <input x-model="color" type="color"
+                       class="w-8 h-8 bg-surface border border-border rounded cursor-pointer">
+                <span class="text-xs mono text-muted">{{ color }}</span>
+            </div>
+
+            <label class="block text-xs mono text-muted mb-1">Parent Project</label>
+            <select x-model="parent_id"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent2/40 mb-6">
+                <option value="">— None —</option>
+                {% for p in project.children %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" @click="showEdit = false"
+                        class="px-4 py-2 text-xs mono uppercase tracking-wider text-muted hover:text-text border border-border rounded transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent2 rounded hover:bg-purple-500 transition-colors">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div x-show="showDelete" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+     @keydown.escape.window="showDelete = false">
+    <div class="bg-panel border border-red-500/20 rounded-lg w-full max-w-sm p-6 glow-red">
+        <h3 class="text-sm font-bold mono uppercase tracking-wider text-red-400 mb-2">Delete Project</h3>
+        <p class="text-xs text-muted mb-6">Are you sure you want to delete "<span class="text-text">{{ project.name }}</span>"? This cannot be undone.</p>
+        <div class="flex justify-end gap-2">
+            <button @click="showDelete = false"
+                    class="px-4 py-2 text-xs mono uppercase tracking-wider text-muted hover:text-text border border-border rounded transition-colors">
+                Cancel
+            </button>
+            <form method="post" action="/projects/{{ project.id }}"
+                  x-data="{ submitted: false }"
+                  @submit="if (submitted) return false; submitted = true;">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-red-500 rounded hover:bg-red-400 transition-colors">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Project Info -->
+<div class="bg-panel border border-border rounded-lg p-5 mb-6">
+    {% if project.description %}
+    <p class="text-sm text-text">{{ project.description }}</p>
+    {% endif %}
+    <div class="mt-4 flex items-center gap-6 text-xs mono text-muted">
+        <span>Created {{ project.created_at.strftime('%Y-%m-%d') }}</span>
+        <span style="display: inline-block; width: 12px; height: 12px; background: {{ project.color or '#1a2332' }}; border-radius: 2px;"></span>
+        <span>{{ project.color or '—' }}</span>
+    </div>
+</div>
+
+<!-- Tasks -->
+<h3 class="text-sm font-bold mono uppercase tracking-wider text-accent mb-4">Tasks</h3>
+
+{% if tasks %}
+<div class="space-y-2">
+    {% for t in tasks %}
+    <div class="bg-panel border border-border rounded-lg px-4 py-3 flex items-center gap-3 card-hover">
+        <!-- Status dot -->
+        <span class="w-2 h-2 rounded-full flex-shrink-0"
+              style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
+
+        <!-- Title -->
+        <span class="text-sm text-text {% if t.status == 'done' %}line-through text-muted{% endif %}">{{ t.title }}</span>
+
+        <!-- Priority badge -->
+        {% if t.priority %}
+        <span class="px-1.5 py-0.5 text-[10px] mono font-bold rounded"
+              style="background: {% if t.priority == 'P0' %}#ff5252{% elif t.priority == 'P1' %}#ff8a65{% elif t.priority == 'P2' %}#ffd740{% else %}#3a4a5c{% endif %}; color: #0a0e17;">
+            {{ t.priority }}
+        </span>
+        {% endif %}
+
+        <!-- Due date -->
+        {% if t.due_date %}
+        <span class="text-[10px] mono text-muted ml-auto">{{ t.due_date }}</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-xs mono text-muted">No tasks in this project yet.</p>
+{% endif %}
+
+</div>
+{% endblock %}

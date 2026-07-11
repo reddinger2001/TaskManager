@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Projects — TaskManager{% endblock %}
+
+{% block content %}
+<div x-data="{ showCreate: false }">
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-bold mono tracking-wider text-text">PROJECTS</h2>
+    <button @click="showCreate = true"
+            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+        + New Project
+    </button>
+</div>
+
+<!-- Create Modal -->
+<div x-show="showCreate" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+     @keydown.escape.window="showCreate = false">
+    <div class="bg-panel border border-border rounded-lg w-full max-w-md p-6 glow-accent">
+        <h3 class="text-sm font-bold mono uppercase tracking-wider text-accent mb-4">New Project</h3>
+        <form method="post" action="/projects/new">
+            <label class="block text-xs mono text-muted mb-1">Name *</label>
+            <input name="name" required type="text"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-4">
+
+            <label class="block text-xs mono text-muted mb-1">Description</label>
+            <textarea name="description" rows="3"
+                      class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-4"></textarea>
+
+            <label class="block text-xs mono text-muted mb-1">Parent Project</label>
+            <select name="parent_id"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-6">
+                <option value="">— None —</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" @click="showCreate = false"
+                        class="px-4 py-2 text-xs mono uppercase tracking-wider text-muted hover:text-text border border-border rounded transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors">
+                    Create
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Grid -->
+{% if projects %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for p in projects %}
+    <a href="/projects/{{ p.id }}"
+       class="block bg-panel border border-border rounded-lg p-5 card-hover group relative">
+        <!-- Color bar -->
+        <div class="absolute top-0 left-0 w-full h-[3px] rounded-t-lg" style="background: {{ p.color or '#1a2332' }};"></div>
+
+        <!-- Parent indicator -->
+        {% if p.parent_id %}
+        <span class="text-[10px] mono text-muted uppercase tracking-wider">↳ Sub-project</span>
+        {% endif %}
+
+        <!-- Name -->
+        <h3 class="mt-1 text-sm font-semibold text-text group-hover:text-accent transition-colors">{{ p.name }}</h3>
+
+        <!-- Description -->
+        {% if p.description %}
+        <p class="mt-1 text-xs text-muted line-clamp-2">{{ p.description[:120] }}{% if p.description|length > 120 %}…{% endif %}</p>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="mt-4 flex items-center justify-between">
+            <span class="text-xs mono text-muted">{{ p.task_count }} task{{ 's' if p.task_count != 1 }}</span>
+            {% if p.task_count > 0 %}
+            <div class="flex items-center gap-2">
+                <div class="w-20 h-[4px] bg-surface rounded-full overflow-hidden">
+                    <div class="h-full rounded-full" style="width: {{ p.completion_pct }}%; background: {{ p.color or '#00e5ff' }};"></div>
+                </div>
+                <span class="text-[10px] mono text-muted">{{ p.completion_pct }}%</span>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center py-20">
+    <p class="text-sm mono text-muted mb-4">No projects yet</p>
+    <button @click="showCreate = true"
+            class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+        + Create Your First Project
+    </button>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
