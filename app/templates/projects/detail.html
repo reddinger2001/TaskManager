@@ -29,8 +29,8 @@
 <!-- Edit Modal -->
 <div x-show="showEdit" x-cloak
      x-data="{
-         name: '{{ project.name | e }}',
-         description: '{{ (project.description or '') | e | replace('\'', '\\\'') }}',
+         name: {{ project.name | tojson }},
+         description: {{ (project.description or '') | tojson }},
          color: '{{ project.color or '#1a2332' }}',
          parent_id: {{ project.parent_id | tojson }},
          saveProject() {

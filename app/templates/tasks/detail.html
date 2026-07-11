@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} — TaskManager{% endblock %}
+
+{% block content %}
+<div x-data="{ showDelete: false }">
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        {% if task.project %}
+        <a href="/projects/{{ task.project.id }}" class="text-xs mono text-muted hover:text-accent transition-colors">
+            ← {{ task.project.name }}
+        </a>
+        {% endif %}
+        <h2 class="text-lg font-bold mono tracking-wider text-text">{{ task.title }}</h2>
+    </div>
+    <button @click="showDelete = true"
+            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-red-400/70 border border-red-500/20 rounded hover:text-red-400 transition-colors">
+        Delete
+    </button>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div x-show="showDelete" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+     @keydown.escape.window="showDelete = false">
+    <div class="bg-panel border border-red-500/20 rounded-lg w-full max-w-sm p-6 glow-red">
+        <h3 class="text-sm font-bold mono uppercase tracking-wider text-red-400 mb-2">Delete Task</h3>
+        <p class="text-xs text-muted mb-6">Are you sure you want to delete "<span class="text-text">{{ task.title[:60] }}{% if task.title|length > 60 %}…{% endif %}</span>"?</p>
+        <div class="flex justify-end gap-2">
+            <button @click="showDelete = false"
+                    class="px-4 py-2 text-xs mono uppercase tracking-wider text-muted hover:text-text border border-border rounded transition-colors">
+                Cancel
+            </button>
+            <form method="post" action="/tasks/{{ task.id }}"
+                  x-data="{ submitted: false }"
+                  @submit="if (submitted) return false; submitted = true;">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-red-500 rounded hover:bg-red-400 transition-colors">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Task Form -->
+<div x-data="{
+    title: {{ task.title | tojson }},
+    description: {{ (task.description or '') | tojson }},
+    status: '{{ task.status }}',
+    priority: '{{ task.priority or '' }}',
+    due_date: '{{ task.due_date or '' }}',
+    assignee: {{ (task.assignee or '') | tojson }},
+    project_id: {{ task.project_id | tojson }},
+    saving: false,
+    save() {
+        if (this.saving) return;
+        this.saving = true;
+        fetch('/tasks/{{ task.id }}', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id })
+        }).then(r => r.json()).then(() => location.reload());
+    }
+}">
+
+<div class="bg-panel border border-border rounded-lg p-5 mb-6 space-y-4">
+
+    <!-- Title -->
+    <div>
+        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Title</label>
+        <input x-model="title" type="text" required
+               @keydown.enter.prevent="save()"
+               class="w-full px-3 py-2 text-sm font-medium mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+    </div>
+
+    <!-- Description -->
+    <div>
+        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Description</label>
+        <textarea x-model="description" rows="3"
+                  @keydown.ctrl.enter.prevent="save()"
+                  class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40"></textarea>
+    </div>
+
+    <!-- Row: Status, Priority, Due Date -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Status</label>
+            <select x-model="status"
+                    @change="save()"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if task.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Priority</label>
+            <select x-model="priority"
+                    @change="save()"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                <option value="">—</option>
+                {% for p in priorities %}
+                <option value="{{ p }}" {% if task.priority == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
+            <input x-model="due_date" type="date"
+                   @change="save()"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+        </div>
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
+            <input x-model="assignee" type="text"
+                   @keydown.enter.prevent="save()"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+        </div>
+    </div>
+
+    <!-- Project -->
+    <div>
+        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Project</label>
+        <select x-model="project_id"
+                @change="save()"
+                class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">— Inbox —</option>
+            {% for p in projects %}
+            <option value="{{ p.id }}" {% if task.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Tags -->
+    <div>
+        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Tags</label>
+        <div class="flex flex-wrap gap-1.5">
+            {% for tag in task.get_tags() %}
+            <span class="px-2 py-0.5 text-[10px] mono bg-accent/10 text-accent rounded">{{ tag }}</span>
+            {% endfor %}
+            {% if not task.get_tags() %}
+            <span class="text-xs text-muted">No tags</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Links -->
+    <div>
+        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Links</label>
+        <div class="space-y-1">
+            {% for link in task.get_links() %}
+            <a href="{{ link.url }}" target="_blank" class="text-xs mono text-accent hover:underline">{{ link.label or link.url }}</a>
+            {% endfor %}
+            {% if not task.get_links() %}
+            <span class="text-xs text-muted">No links</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Save button -->
+    <div class="flex justify-end pt-2 border-t border-border">
+        <button @click="save()"
+                :disabled="saving"
+                class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors {% if saving %}opacity-50 cursor-not-allowed{% endif %}">
+            <span x-show="!saving">Save</span>
+            <span x-show="saving">Saving...</span>
+        </button>
+    </div>
+
+</div>
+
+</div><!-- /x-data -->
+
+<!-- Metadata -->
+<div class="flex items-center gap-6 text-xs mono text-muted mb-6">
+    <span>Created {{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    <span>Updated {{ task.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    {% if task.completed_at %}
+    <span class="text-green-400">Completed {{ task.completed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    {% endif %}
+</div>
+
+<!-- Logs -->
+<h3 class="text-sm font-bold mono uppercase tracking-wider text-accent mb-4">Logs</h3>
+{% if task.logs %}
+<div class="space-y-2">
+    {% for log in task.logs | sort(attribute='created_at', reverse=true) %}
+    <div class="bg-panel border border-border rounded-lg px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+            <span class="text-sm text-text">{{ log.title }}</span>
+            <span class="text-[10px] mono text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        </div>
+        {% if log.notes %}
+        <p class="text-xs text-muted mt-1">{{ log.notes }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-xs mono text-muted">No logs for this task.</p>
+{% endif %}
+
+</div>
+{% endblock %}

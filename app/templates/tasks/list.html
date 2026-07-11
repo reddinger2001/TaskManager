@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Tasks — TaskManager{% endblock %}
+
+{% block content %}
+<div x-data="{ showCapture: false }">
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-bold mono tracking-wider text-text">TASKS</h2>
+    <button @click="showCapture = true"
+            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+        + Capture
+    </button>
+</div>
+
+<!-- Capture Modal -->
+<div x-show="showCapture" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+     @keydown.escape.window="showCapture = false">
+    <div class="bg-panel border border-border rounded-lg w-full max-w-md p-6 glow-accent">
+        <h3 class="text-sm font-bold mono uppercase tracking-wider text-accent mb-4">Quick Capture</h3>
+        <form method="post" action="/tasks/new">
+            <label class="block text-xs mono text-muted mb-1">Title *</label>
+            <input name="title" required type="text" autofocus placeholder="What's on your mind?"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-4">
+
+            <label class="block text-xs mono text-muted mb-1">Description</label>
+            <textarea name="description" rows="2" placeholder="Optional details..."
+                      class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-4"></textarea>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs mono text-muted mb-1">Status</label>
+                    <select name="status"
+                            class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == 'backlog' %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs mono text-muted mb-1">Priority</label>
+                    <select name="priority"
+                            class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                        <option value="">—</option>
+                        {% for p in priorities %}
+                        <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs mono text-muted mb-1">Due Date</label>
+                    <input name="due_date" type="date"
+                           class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                </div>
+                <div>
+                    <label class="block text-xs mono text-muted mb-1">Assignee</label>
+                    <input name="assignee" type="text" placeholder="Who?"
+                           class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                </div>
+            </div>
+
+            <label class="block text-xs mono text-muted mb-1">Project</label>
+            <select name="project_id"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-4">
+                <option value="">— Inbox —</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label class="block text-xs mono text-muted mb-1">Tags (comma-separated)</label>
+            <input name="tags" type="text" placeholder="e.g. security, urgent"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 mb-6">
+
+            <div class="flex justify-end gap-2">
+                <button type="button" @click="showCapture = false"
+                        class="px-4 py-2 text-xs mono uppercase tracking-wider text-muted hover:text-text border border-border rounded transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors">
+                    Capture
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <form method="get" action="/tasks" class="flex flex-wrap items-center gap-2">
+        <input name="q" type="text" value="{{ current_q }}" placeholder="Search..."
+               class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-40">
+
+        <select name="status" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Statuses</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="priority" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Priorities</option>
+            {% for p in priorities %}
+            <option value="{{ p }}" {% if current_priority == p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="project_id" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Projects</option>
+            {% for p in projects %}
+            <option value="{{ p.id }}" {% if current_project_id == p.id | string %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit"
+                class="px-3 py-1.5 text-xs mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+            Filter
+        </button>
+    </form>
+</div>
+
+<!-- Task Table -->
+{% if tasks %}
+<div class="bg-panel border border-border rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-border text-xs mono uppercase tracking-wider text-muted">
+                <th class="text-left px-4 py-2.5 w-8"></th>
+                <th class="text-left px-4 py-2.5">Title</th>
+                <th class="text-left px-4 py-2.5 w-20">Status</th>
+                <th class="text-left px-4 py-2.5 w-16">Priority</th>
+                <th class="text-left px-4 py-2.5 w-28">Due</th>
+                <th class="text-left px-4 py-2.5 w-24">Assignee</th>
+                <th class="text-left px-4 py-2.5 w-32">Project</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tasks %}
+            <a href="/tasks/{{ t.id }}" class="block hover:bg-surface/50 transition-colors">
+                <tr>
+                    <!-- Status dot -->
+                    <td class="px-4 py-2.5">
+                        <span class="w-2 h-2 rounded-full inline-block"
+                              style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                    </td>
+                    <!-- Title -->
+                    <td class="px-4 py-2.5 text-text {% if t.status == 'done' %}line-through text-muted{% endif %}">
+                        {{ t.title }}
+                    </td>
+                    <!-- Status -->
+                    <td class="px-4 py-2.5">
+                        <span class="text-[10px] mono uppercase tracking-wider"
+                              style="color: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};">
+                            {{ t.status }}
+                        </span>
+                    </td>
+                    <!-- Priority -->
+                    <td class="px-4 py-2.5">
+                        {% if t.priority %}
+                        <span class="px-1.5 py-0.5 text-[10px] mono font-bold rounded"
+                              style="background: {% if t.priority == 'P0' %}#ff5252{% elif t.priority == 'P1' %}#ff8a65{% elif t.priority == 'P2' %}#ffd740{% else %}#3a4a5c{% endif %}; color: #0a0e17;">
+                            {{ t.priority }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted text-xs">—</span>
+                        {% endif %}
+                    </td>
+                    <!-- Due -->
+                    <td class="px-4 py-2.5 text-xs mono text-muted">{{ t.due_date or '—' }}</td>
+                    <!-- Assignee -->
+                    <td class="px-4 py-2.5 text-xs text-muted">{{ t.assignee or '—' }}</td>
+                    <!-- Project -->
+                    <td class="px-4 py-2.5 text-xs text-muted">{{ t.project.name if t.project else '—' }}</td>
+                </tr>
+            </a>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center py-20">
+    <p class="text-sm mono text-muted mb-4">No tasks found</p>
+    <button @click="showCapture = true"
+            class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+        + Capture a Task
+    </button>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
