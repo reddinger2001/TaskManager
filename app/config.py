@@ -1,5 +1,10 @@
 import os
 
+try:
+    import pysqlite3 as sqlite3  # noqa: F401 — needed for extension loading
+except ImportError:
+    pass
+
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
