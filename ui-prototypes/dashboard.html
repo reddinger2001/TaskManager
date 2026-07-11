@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskManager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0a0e17',
+                        surface: '#0d1220',
+                        panel: '#111827',
+                        border: '#1a2332',
+                        accent: '#00e5ff',
+                        accent2: '#7c4dff',
+                        dim: '#3a4a5c',
+                        text: '#c8d6e5',
+                        muted: '#4a5568',
+                    },
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        * { scrollbar-width: thin; scrollbar-color: #1a2332 transparent; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1a2332; border-radius: 2px; }
+
+        body { font-family: 'Inter', system-ui, sans-serif; }
+
+        .glow-accent { box-shadow: 0 0 20px -5px rgba(0, 229, 255, 0.15); }
+        .glow-accent2 { box-shadow: 0 0 20px -5px rgba(124, 77, 255, 0.15); }
+        .glow-red { box-shadow: 0 0 20px -5px rgba(255, 82, 82, 0.15); }
+
+        .card-hover { transition: all 0.15s ease; }
+        .card-hover:hover { border-color: #00e5ff30; background: #0d1220ee; }
+
+        .section-line { position: relative; }
+        .section-line::before {
+            content: '';
+            position: absolute;
+            left: -16px; top: 0; bottom: 0;
+            width: 2px;
+            border-radius: 1px;
+        }
+
+        .mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7) sepia(1) saturate(3) hue-rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-bg text-text min-h-screen" x-data="dashboard()">
+
+<!-- Header -->
+<header class="border-b border-border sticky top-0 z-40 bg-bg/90 backdrop-blur-md">
+    <div class="max-w-[1400px] mx-auto px-6">
+        <div class="flex items-center justify-between h-[52px]">
+            <div class="flex items-center gap-8">
+                <h1 class="text-base font-bold tracking-widest mono" style="color: #00e5ff;">
+                    <span style="opacity: 0.4;">&#9632;</span> TASKMANAGER
+                </h1>
+                <nav class="flex items-center gap-1">
+                    <a href="#" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-accent border-b-2 border-accent">Dashboard</a>
+                    <a href="#" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Projects</a>
+                    <a href="board.html" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Board</a>
+                    <a href="#" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Calendar</a>
+                    <a href="gantt.html" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Gantt</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search..." class="w-56 pl-8 pr-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button @click="showModal = true" class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+                    + New
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main -->
+<main class="max-w-[1400px] mx-auto px-6 py-6">
+
+    <!-- Summary Bar -->
+    <div class="grid grid-cols-5 gap-3 mb-8">
+        <template x-for="(stat, i) in summaryStats" :key="i">
+            <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer" :class="stat.glow">
+                <div class="text-xs mono uppercase tracking-wider text-muted mb-1" x-text="stat.label"></div>
+                <div class="text-2xl font-bold mono" :style="`color: ${stat.color}`;" x-text="stat.count"></div>
+            </div>
+        </template>
+    </div>
+
+    <!-- On Fire -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-red-400">On Fire</h2>
+        </div>
+        <div class="space-y-2">
+            <template x-for="task in tasks.filter(t => t.status === 'blocked' || t.priority === 'P0')" :key="task.id">
+                <div class="bg-surface border-l-2 border-red-500/60 rounded-r-lg p-4 card-hover glow-red cursor-pointer" :class="task.priority === 'P0' ? 'border-red-500/40' : 'border-orange-500/40'">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span x-show="task.priority === 'P0'" class="mono text-xs font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30" x-text="task.priority"></span>
+                            <span x-show="task.status === 'blocked'" class="mono text-xs font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">BLOCKED</span>
+                            <h3 class="text-sm font-medium text-text truncate" x-text="task.title"></h3>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 ml-4">
+                            <span x-show="task.assignee" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-panel border border-border mono" :style="`color: ${stringToColor(task.assignee)}`;" x-text="task.assignee.charAt(0)"></span>
+                            <span x-show="task.due_date" class="text-xs mono text-muted" x-text="task.due_date"></span>
+                        </div>
+                    </div>
+                    <p x-show="task.description" class="text-xs text-muted mt-2 leading-relaxed" x-text="task.description"></p>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Delegated -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-accent2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-accent2">Delegated</h2>
+        </div>
+        <div class="space-y-5">
+            <template x-for="(group, assignee) in getDelegatedByAssignee()" :key="assignee">
+                <div>
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mono border" :style="`background: ${stringToColor(assignee)}15; color: ${stringToColor(assignee)}; border-color: ${stringToColor(assignee)}40;`" x-text="assignee.charAt(0)"></span>
+                        <span class="text-sm font-medium text-text" x-text="assignee"></span>
+                        <span class="text-xs mono text-muted" x-text="`· ${group.length} task${group.length > 1 ? 's' : ''}`"></span>
+                    </div>
+                    <div class="space-y-1.5 ml-9">
+                        <template x-for="task in group" :key="task.id">
+                            <div class="bg-surface border border-border rounded-lg p-3 card-hover cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span x-show="task.priority" class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0" :class="priorityClass(task.priority)" x-text="task.priority"></span>
+                                        <h3 class="text-sm text-text truncate" x-text="task.title"></h3>
+                                    </div>
+                                    <span class="mono text-xs px-2 py-0.5 rounded-md shrink-0 ml-2" :class="statusClass(task.status)" x-text="task.status"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- My Active Work -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-accent">My Active Work</h2>
+        </div>
+        <div class="space-y-2">
+            <template x-for="task in tasks.filter(t => t.status === 'active')" :key="task.id">
+                <div class="bg-surface border-l-2 border-accent/40 rounded-r-lg p-4 card-hover glow-accent cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span x-show="task.priority" class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0" :class="priorityClass(task.priority)" x-text="task.priority"></span>
+                            <h3 class="text-sm font-medium text-text truncate" x-text="task.title"></h3>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 ml-4">
+                            <span x-show="task.project" class="mono text-xs px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20" x-text="task.project"></span>
+                            <span x-show="task.due_date" class="text-xs mono text-muted" x-text="'Due ' + task.due_date"></span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Backlog -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-muted">Backlog</h2>
+        </div>
+        <div class="space-y-1.5">
+            <template x-for="task in tasks.filter(t => t.status === 'backlog').sort((a,b) => prioritySort(a.priority, b.priority))" :key="task.id">
+                <div class="bg-surface border border-border rounded-lg p-3 card-hover cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span x-show="task.priority" class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0" :class="priorityClass(task.priority)" x-text="task.priority"></span>
+                            <h3 class="text-sm text-text/80 truncate" x-text="task.title"></h3>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 ml-4">
+                            <span x-show="task.project" class="mono text-xs px-2 py-0.5 rounded bg-panel text-muted border border-border" x-text="task.project"></span>
+                            <span x-show="task.due_date" class="text-xs mono text-muted" x-text="'Due ' + task.due_date"></span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Inbox -->
+    <section x-show="showInbox" x-cloak class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-amber-400">Inbox</h2>
+        </div>
+        <div class="space-y-1.5">
+            <template x-for="task in tasks.filter(t => !t.project)" :key="task.id">
+                <div class="bg-surface border-l-2 border-amber-500/40 rounded-r-lg p-3 card-hover cursor-pointer">
+                    <h3 class="text-sm text-text/80" x-text="task.title"></h3>
+                </div>
+            </template>
+        </div>
+    </section>
+
+</main>
+
+<!-- Inbox toggle button -->
+<button @click="showInbox = !showInbox" x-show="tasks.filter(t => !t.project).length > 0" class="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-surface border border-border flex items-center justify-center hover:border-accent/40 transition-colors glow-accent z-30">
+    <span class="text-xs font-bold mono text-accent" x-text="tasks.filter(t => !t.project).length"></span>
+</button>
+
+<!-- New Task Modal -->
+<div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showModal = false">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-bg/80 backdrop-blur-sm" @click="showModal = false"></div>
+
+        <div class="relative bg-surface rounded-xl border border-border w-full max-w-lg glow-accent">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 class="text-sm font-bold mono uppercase tracking-widest text-accent">New</h2>
+                <button @click="showModal = false" class="text-muted hover:text-text transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="showModal = false" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Title <span class="text-red-400">*</span></label>
+                    <input type="text" required placeholder="What's on your mind?" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Description</label>
+                    <textarea rows="3" placeholder="Optional details..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Status</label>
+                        <select class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="backlog">Backlog</option>
+                            <option value="active">Active</option>
+                            <option value="delegated">Delegated</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Priority</label>
+                        <select class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="">— None —</option>
+                            <option value="P0">P0 — Critical</option>
+                            <option value="P1">P1 — High</option>
+                            <option value="P2">P2 — Normal</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
+                        <input type="date" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
+                        <input type="text" placeholder="Name..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Project</label>
+                    <select class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                        <option value="">— None — (Inbox)</option>
+                        <option value="1">SOC Modernization</option>
+                        <option value="2">Q3 Audit Prep</option>
+                        <option value="3">Vendor Assessments</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Tags</label>
+                    <input type="text" placeholder="Type and press Enter..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Links</label>
+                    <div class="flex gap-2">
+                        <input type="url" placeholder="https://..." class="flex-1 px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                        <input type="text" placeholder="Label" class="w-28 px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border">
+                    <button type="button" @click="showModal = false" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-muted bg-panel rounded-lg hover:text-text transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-bg bg-accent rounded-lg hover:bg-cyan-300 transition-colors">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboard() {
+    return {
+        showModal: false,
+        showInbox: false,
+        tasks: [
+            { id: 1, title: 'SOC Modernization kickoff meeting', priority: 'P0', status: 'active', assignee: '', project: 'SOC Modernization', due_date: 'Jul 15', description: 'Schedule and prepare materials for the kickoff with the SOC team.' },
+            { id: 2, title: 'Q3 audit prep timeline', priority: 'P0', status: 'backlog', assignee: '', project: 'Q3 Audit Prep', due_date: 'Jul 20' },
+            { id: 3, title: 'Vendor assessment — Acme Corp', priority: '', status: 'blocked', assignee: 'Sarah', project: 'Vendor Assessments', description: 'Waiting on vendor to provide SOC 2 report.' },
+            { id: 4, title: 'Access control review for Finance dept', priority: '', status: 'blocked', assignee: 'Mike', description: 'Blocked — waiting on HR to provide current employee list.' },
+            { id: 5, title: 'Policy review — Acceptable Use Policy', priority: 'P1', status: 'delegated', assignee: 'Sarah', project: 'SOC Modernization' },
+            { id: 6, title: 'Incident response documentation update', priority: 'P1', status: 'delegated', assignee: 'Jamie', project: 'SOC Modernization' },
+            { id: 7, title: 'MFA rollout plan for Q4', priority: 'P2', status: 'delegated', assignee: 'Alex', project: 'SOC Modernization' },
+            { id: 8, title: 'Phishing simulation vendor evaluation', priority: 'P1', status: 'active', assignee: 'Mike', project: 'Vendor Assessments' },
+            { id: 9, title: 'SOC runbook update — phishing response', priority: 'P1', status: 'active', project: 'SOC Modernization', due_date: 'Jul 18' },
+            { id: 10, title: 'Security training Q3 planning', priority: 'P2', status: 'active', project: '', due_date: 'Aug 1' },
+            { id: 11, title: 'Tabletop exercise planning — ransomware scenario', priority: 'P1', status: 'backlog', project: 'SOC Modernization', due_date: 'Aug 15' },
+            { id: 12, title: 'Update incident response contact list', priority: 'P2', status: 'backlog', project: 'SOC Modernization' },
+            { id: 13, title: 'NIST CSF mapping for new regulation', priority: 'P1', status: 'backlog', project: 'Q3 Audit Prep' },
+            { id: 14, title: 'Review firewall rules for DMZ segment', priority: 'P2', status: 'backlog', project: '' },
+            { id: 15, title: 'Draft budget numbers for Q4 security tools', priority: '', status: 'backlog', project: 'Vendor Assessments' },
+            { id: 16, title: 'Need to check on CMMC Level 2 scoping for new contract', status: 'backlog' },
+            { id: 17, title: 'Remind Mike about access review deadline next week', status: 'backlog' },
+            { id: 18, title: 'Look into Zero Trust architecture paper from Gartner', status: 'backlog' },
+        ],
+
+        get summaryStats() {
+            return [
+                { label: 'On Fire', count: this.tasks.filter(t => t.status === 'blocked' || t.priority === 'P0').length, color: '#ff5252', glow: '' },
+                { label: 'Delegated', count: this.tasks.filter(t => t.status === 'delegated').length, color: '#7c4dff', glow: '' },
+                { label: 'Active', count: this.tasks.filter(t => t.status === 'active').length, color: '#00e5ff', glow: '' },
+                { label: 'Backlog', count: this.tasks.filter(t => t.status === 'backlog').length, color: '#6b7280', glow: '' },
+                { label: 'Inbox', count: this.tasks.filter(t => !t.project).length, color: '#ffc107', glow: '' },
+            ];
+        },
+
+        getDelegatedByAssignee() {
+            const delegated = this.tasks.filter(t => t.status === 'delegated' || (t.assignee && t.status === 'active'));
+            const groups = {};
+            for (const task of delegated) {
+                if (!groups[task.assignee]) groups[task.assignee] = [];
+                groups[task.assignee].push(task);
+            }
+            return groups;
+        },
+
+        priorityClass(p) {
+            if (p === 'P0') return 'bg-red-500/20 text-red-400 border border-red-500/30';
+            if (p === 'P1') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            if (p === 'P2') return 'bg-cyan-500/20 text-accent border border-cyan-500/30';
+            return '';
+        },
+
+        statusClass(s) {
+            const m = {
+                backlog: 'text-muted bg-panel',
+                active: 'text-accent bg-accent/10 border border-accent/20',
+                blocked: 'text-orange-400 bg-orange-500/10 border border-orange-500/20',
+                delegated: 'text-accent2 bg-accent2/10 border border-accent2/20',
+                done: 'text-green-400 bg-green-500/10 border border-green-500/20',
+            };
+            return m[s] || '';
+        },
+
+        prioritySort(a, b) {
+            const o = { P0: 0, P1: 1, P2: 2, '': 3 };
+            return (o[a] ?? 3) - (o[b] ?? 3);
+        },
+
+        stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            const colors = ['#00e5ff', '#7c4dff', '#ff5252', '#ffc107', '#69f0ae', '#ff6e40'];
+            return colors[Math.abs(hash) % colors.length];
+        }
+    }
+}
+</script>
+
+</body>
+</html>
