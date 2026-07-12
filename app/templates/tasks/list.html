@@ -161,6 +161,11 @@
         </select>
         {% endif %}
 
+        <select name="date_field" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="due_date" {% if current_date_field == 'due_date' %}selected{% endif %}>Due Date</option>
+            <option value="completed_at" {% if current_date_field == 'completed_at' %}selected{% endif %}>Completed On</option>
+            <option value="created_at" {% if current_date_field == 'created_at' %}selected{% endif %}>Created On</option>
+        </select>
         <input type="date" name="date_from" value="{{ current_date_from }}"
                class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
         <input type="date" name="date_to" value="{{ current_date_to }}"
@@ -181,37 +186,37 @@
             <tr class="border-b border-border text-xs mono uppercase tracking-wider text-muted">
                 <th class="text-left px-4 py-2.5 w-8"></th>
                 <th class="text-left px-4 py-2.5">
-                    <a href="?sort=title&order={% if sort_field == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=title&order={% if sort_field == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Title {{ sort_arrow('title') }}
                     </a>
                 </th>
                 <th class="text-left px-4 py-2.5 w-20">
-                    <a href="?sort=status&order={% if sort_field == 'status' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=status&order={% if sort_field == 'status' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Status {{ sort_arrow('status') }}
                     </a>
                 </th>
                 <th class="text-left px-4 py-2.5 w-16">
-                    <a href="?sort=priority&order={% if sort_field == 'priority' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=priority&order={% if sort_field == 'priority' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Priority {{ sort_arrow('priority') }}
                     </a>
                 </th>
                 <th class="text-left px-4 py-2.5 w-28">
-                    <a href="?sort=due_date&order={% if sort_field == 'due_date' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=due_date&order={% if sort_field == 'due_date' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Due {{ sort_arrow('due_date') }}
                     </a>
                 </th>
                 <th class="text-left px-4 py-2.5 w-24">
-                    <a href="?sort=assignee&order={% if sort_field == 'assignee' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=assignee&order={% if sort_field == 'assignee' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Assignee {{ sort_arrow('assignee') }}
                     </a>
                 </th>
                 <th class="text-left px-4 py-2.5 w-32">
-                    <a href="?sort=project&order={% if sort_field == 'project' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                    <a href="?sort=project&order={% if sort_field == 'project' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
                         Project {{ sort_arrow('project') }}
                     </a>

@@ -32,6 +32,7 @@ def list_tasks():
     project_id = request.args.get("project_id", "")
     assignee = request.args.get("assignee", "").strip()
     tag = request.args.get("tag", "").strip()
+    date_field = request.args.get("date_field", "due_date")  # due_date, completed_at, created_at
     date_from = request.args.get("date_from", "").strip()
     date_to = request.args.get("date_to", "").strip()
 
@@ -59,10 +60,18 @@ def list_tasks():
     if tag:
         # Filter by JSON array contains the tag (case-insensitive via SQLite)
         query = query.filter(Task.tags.contains(f'"{tag}"'))
-    if date_from:
-        query = query.filter(Task.due_date >= date_from)
-    if date_to:
-        query = query.filter(Task.due_date <= date_to)
+    # Date range filter — choose which date field to filter on
+    DATE_FIELDS = {
+        "due_date": Task.due_date,
+        "completed_at": Task.completed_at,
+        "created_at": Task.created_at,
+    }
+    if date_field in DATE_FIELDS and (date_from or date_to):
+        col = DATE_FIELDS[date_field]
+        if date_from:
+            query = query.filter(col >= date_from)
+        if date_to:
+            query = query.filter(col <= date_to)
 
     # Sorting — nulls last for nullable columns
     sort_col = SORT_FIELDS[sort_field]
@@ -103,6 +112,7 @@ def list_tasks():
         current_project_id=project_id,
         current_assignee=assignee,
         current_tag=tag,
+        current_date_field=date_field,
         current_date_from=date_from,
         current_date_to=date_to,
         sort_field=sort_field,
