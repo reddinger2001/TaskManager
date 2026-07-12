@@ -15,10 +15,16 @@
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
     <h2 class="text-lg font-bold mono tracking-wider text-text">TASKS</h2>
-    <button @click="showCapture = true"
-            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
-        + Capture
-    </button>
+    <div class="flex items-center gap-2">
+        <a href="/tasks/export.csv?q={{ current_q | urlencode }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+           class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+            Export CSV
+        </a>
+        <button @click="showCapture = true"
+                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors glow-accent">
+            + Capture
+        </button>
+    </div>
 </div>
 
 <!-- Capture Modal -->

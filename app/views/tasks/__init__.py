@@ -1,6 +1,8 @@
+import csv
+import io
 from datetime import datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
 
 from app.models import Project, Task, db
 
@@ -117,6 +119,82 @@ def list_tasks():
         current_date_to=date_to,
         sort_field=sort_field,
         sort_order=sort_order,
+    )
+
+
+@tasks_bp.route("/tasks/export.csv")
+def export_csv():
+    """Export task list as CSV, applying current filters."""
+    # Reuse the same filter/sort logic as list_tasks
+    q = request.args.get("q", "").strip()
+    status = request.args.get("status", "")
+    priority = request.args.get("priority", "")
+    project_id = request.args.get("project_id", "")
+    assignee = request.args.get("assignee", "").strip()
+    tag = request.args.get("tag", "").strip()
+    date_field = request.args.get("date_field", "due_date")
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+    sort_field = request.args.get("sort", DEFAULT_SORT[0])
+    sort_order = request.args.get("order", DEFAULT_SORT[1]).lower()
+    if sort_field not in SORT_FIELDS:
+        sort_field = DEFAULT_SORT[0]
+    if sort_order not in ("asc", "desc"):
+        sort_order = DEFAULT_SORT[1]
+
+    query = Task.query.outerjoin(Project, Task.project_id == Project.id)
+
+    if q:
+        query = query.filter(Task.title.ilike(f"%{q}%"))
+    if status and status in STATUSES:
+        query = query.filter(Task.status == status)
+    if priority and priority in PRIORITIES:
+        query = query.filter(Task.priority == priority)
+    if project_id:
+        query = query.filter(Task.project_id == int(project_id))
+    if assignee:
+        query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
+    if tag:
+        query = query.filter(Task.tags.contains(f'"{tag}"'))
+
+    DATE_FIELDS = {
+        "due_date": Task.due_date,
+        "completed_at": Task.completed_at,
+        "created_at": Task.created_at,
+    }
+    if date_field in DATE_FIELDS and (date_from or date_to):
+        col = DATE_FIELDS[date_field]
+        if date_from:
+            query = query.filter(col >= date_from)
+        if date_to:
+            query = query.filter(col <= date_to)
+
+    sort_col = SORT_FIELDS[sort_field]
+    if sort_order == "desc":
+        sort_col = sort_col.desc()
+    tasks = query.order_by(sort_col, Task.created_at.desc()).all()
+
+    # Generate CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Title", "Status", "Priority", "Assignee", "Due Date", "Project", "Tags"])
+    for t in tasks:
+        writer.writerow([
+            t.title,
+            t.status,
+            t.priority or "",
+            t.assignee or "",
+            t.due_date or "",
+            t.project.name if t.project else "",
+            ", ".join(t.get_tags()),
+        ])
+
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode("utf-8")),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="tasks.csv",
     )
 
 
