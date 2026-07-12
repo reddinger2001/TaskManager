@@ -32,6 +32,9 @@ def create_app():
     from app.views.projects import projects_bp
     app.register_blueprint(projects_bp)
 
+    from app.views.logs import logs_bp
+    app.register_blueprint(logs_bp)
+
     from app.views.tasks import tasks_bp
     app.register_blueprint(tasks_bp)
 
