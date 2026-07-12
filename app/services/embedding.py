@@ -23,6 +23,9 @@ _model: SentenceTransformer | None = None
 # Queue of (task_id, title, description) to embed after commit.
 _pending_embeddings: List[tuple] = []
 
+# Queue of (task_id, title, description, tags_text) to index in FTS5 after commit.
+_pending_fts5: List[tuple] = []
+
 
 def get_model() -> SentenceTransformer:
     """Return the singleton embedding model, loading it on first call."""
@@ -110,3 +113,53 @@ def register_embedding_hooks(app):
     @event.listens_for(Session, "after_commit")
     def _on_commit(session):
         _flush_pending()
+
+
+def register_fts5_hooks(app):
+    """Register SQLAlchemy event hooks to keep FTS5 search_index in sync.
+
+    Uses after_flush to queue tasks (IDs are assigned), then after_commit
+    to actually write to the FTS5 virtual table (DB is free of locks).
+    """
+    from sqlalchemy import event
+    from sqlalchemy.orm import Session
+    from app.models import Task
+
+    @event.listens_for(Session, "after_flush")
+    def _on_flush(session, flush_context):
+        for obj in session.new | session.dirty:
+            if isinstance(obj, Task) and obj.id is not None:
+                tags_text = " ".join(obj.get_tags()) if obj.tags else ""
+                _pending_fts5.append((obj.id, obj.title or "", obj.description or "", tags_text))
+
+    @event.listens_for(Session, "after_commit")
+    def _on_commit(session):
+        _flush_fts5()
+
+
+def _flush_fts5():
+    """Process all pending FTS5 index updates."""
+    global _pending_fts5
+    tasks = list(_pending_fts5)
+    _pending_fts5.clear()
+
+    if not tasks:
+        return
+
+    try:
+        from app.extensions import get_vec_connection
+
+        conn = get_vec_connection()
+        try:
+            for task_id, title, description, tags_text in tasks:
+                conn.execute(
+                    "INSERT OR REPLACE INTO search_index(task_id, title, description, tags_text) VALUES (?, ?, ?, ?)",
+                    (task_id, title, description, tags_text),
+                )
+            conn.commit()
+        except Exception:
+            logger.exception("Failed to sync FTS5 index")
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("FTS5 sync: could not get connection")

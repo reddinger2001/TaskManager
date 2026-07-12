@@ -21,9 +21,10 @@ def create_app():
     # Initialize database and extensions
     init_extensions(app)
 
-    # Register embedding hooks (after_commit → background thread)
-    from app.services.embedding import register_embedding_hooks
+    # Register embedding hooks (after_commit → sync embed + FTS5)
+    from app.services.embedding import register_embedding_hooks, register_fts5_hooks
     register_embedding_hooks(app)
+    register_fts5_hooks(app)
 
     from app.views.main import main_bp
     app.register_blueprint(main_bp)

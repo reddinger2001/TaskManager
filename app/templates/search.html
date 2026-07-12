@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Search — TaskManager{% endblock %}
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-lg font-bold mono tracking-wider text-text mb-2">SEARCH RESULTS</h2>
+    {% if q %}
+    <p class="text-sm mono text-muted">
+        Found <span class="text-accent">{{ total }}</span> results for "<span class="text-text">{{ q }}</span>"
+    </p>
+    {% endif %}
+</div>
+
+{% if not q %}
+<div class="flex flex-col items-center justify-center py-20">
+    <p class="text-sm mono text-muted">Type something in the search bar above</p>
+</div>
+{% elif total == 0 %}
+<div class="flex flex-col items-center justify-center py-20">
+    <p class="text-sm mono text-muted mb-2">No results for "{{ q }}"</p>
+    <p class="text-xs mono text-muted">Try different keywords or check spelling</p>
+</div>
+{% endif %}
+
+{% if task_results %}
+<div class="mb-8">
+    <h3 class="text-xs font-bold mono uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+        Tasks ({{ task_results|length }})
+    </h3>
+    <div class="bg-panel border border-border rounded-lg divide-y divide-border">
+        {% for t in task_results %}
+        <a href="/tasks/{{ t.id }}" class="block px-4 py-3 hover:bg-surface/50 transition-colors">
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 w-2 h-2 rounded-full flex-shrink-0"
+                      style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm text-text {% if t.status == 'done' %}line-through text-muted{% endif %} mb-1">
+                        {{ highlight(t.title, q) }}
+                    </div>
+                    {% if t.description %}
+                    <div class="text-xs mono text-muted line-clamp-2">
+                        {{ highlight(t.description, q) }}
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center gap-3 mt-1.5 text-[10px] mono text-muted">
+                        <span>{{ t.status }}</span>
+                        {% if t.priority %}
+                        <span class="px-1 py-0 rounded"
+                              style="background: {% if t.priority == 'P0' %}#ff5252{% elif t.priority == 'P1' %}#ff8a65{% elif t.priority == 'P2' %}#ffd740{% else %}#3a4a5c{% endif %}; color: #0a0e17;">
+                            {{ t.priority }}
+                        </span>
+                        {% endif %}
+                        {% if t.due_date %}<span>Due {{ t.due_date }}</span>{% endif %}
+                        {% if t.project %}<span>{{ t.project.name }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if project_results %}
+<div class="mb-8">
+    <h3 class="text-xs font-bold mono uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        Projects ({{ project_results|length }})
+    </h3>
+    <div class="bg-panel border border-border rounded-lg divide-y divide-border">
+        {% for p in project_results %}
+        <a href="/projects/{{ p.id }}" class="block px-4 py-3 hover:bg-surface/50 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-sm flex-shrink-0" style="background: {{ p.color or '#3a4a5c' }};"></span>
+                <div class="text-sm text-text">{{ highlight(p.name, q) }}</div>
+                {% if p.description %}
+                <div class="text-xs mono text-muted ml-2 truncate">{{ highlight(p.description[:100], q) }}</div>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if log_results %}
+<div class="mb-8">
+    <h3 class="text-xs font-bold mono uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        Logs ({{ log_results|length }})
+    </h3>
+    <div class="bg-panel border border-border rounded-lg divide-y divide-border">
+        {% for l in log_results %}
+        <div class="px-4 py-3">
+            <div class="text-sm text-text mb-1">{{ highlight(l.title, q) }}</div>
+            {% if l.notes %}
+            <div class="text-xs mono text-muted line-clamp-2">{{ highlight(l.notes, q) }}</div>
+            {% endif %}
+            <div class="text-[10px] mono text-muted mt-1.5">
+                {{ l.created_at.strftime('%Y-%m-%d') }}
+                {% if l.task_id %}· Task #{{ l.task_id }}{% endif %}
+                {% if l.project_id %}· Project #{{ l.project_id }}{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
