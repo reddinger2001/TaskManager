@@ -3,34 +3,296 @@
 {% block title %}Dashboard — TaskManager{% endblock %}
 
 {% block content %}
-<!-- Summary Bar -->
-<div class="grid grid-cols-5 gap-3 mb-8">
-    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
-        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">On Fire</div>
-        <div class="text-2xl font-bold mono" style="color: #ff5252;">0</div>
+<div x-data="{ showModal: false, showInbox: false }" @open-modal.window="showModal = true" @toggle-inbox.window="showInbox = !showInbox">
+
+    <!-- Summary Bar -->
+    <div class="grid grid-cols-5 gap-3 mb-8">
+        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+            <div class="text-xs mono uppercase tracking-wider text-muted mb-1">On Fire</div>
+            <div class="text-2xl font-bold mono" style="color: #ff5252;">{{ on_fire|length }}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+            <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Delegated</div>
+            <div class="text-2xl font-bold mono" style="color: #7c4dff;">{{ delegated|length }}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+            <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Active</div>
+            <div class="text-2xl font-bold mono" style="color: #00e5ff;">{{ active|length }}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+            <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Backlog</div>
+            <div class="text-2xl font-bold mono" style="color: #6b7280;">{{ backlog|length }}</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+            <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Inbox</div>
+            <div class="text-2xl font-bold mono" style="color: #ffc107;">{{ inbox|length }}</div>
+        </div>
     </div>
-    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
-        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Delegated</div>
-        <div class="text-2xl font-bold mono" style="color: #7c4dff;">0</div>
-    </div>
-    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
-        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Active</div>
-        <div class="text-2xl font-bold mono" style="color: #00e5ff;">0</div>
-    </div>
-    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
-        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Backlog</div>
-        <div class="text-2xl font-bold mono" style="color: #6b7280;">0</div>
-    </div>
-    <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
-        <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Inbox</div>
-        <div class="text-2xl font-bold mono" style="color: #ffc107;">0</div>
+
+    <!-- On Fire -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-red-400">On Fire</h2>
+        </div>
+        {% if on_fire %}
+        <div class="space-y-2">
+            {% for task in on_fire %}
+            <a href="/tasks/{{ task.id }}" class="block bg-surface border-l-2 border-red-500/60 rounded-r-lg p-4 card-hover glow-red">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3 min-w-0">
+                        {% if task.priority == 'P0' %}
+                        <span class="mono text-xs font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">{{ task.priority }}</span>
+                        {% endif %}
+                        {% if task.status == 'blocked' %}
+                        <span class="mono text-xs font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">BLOCKED</span>
+                        {% endif %}
+                        <h3 class="text-sm font-medium text-text truncate">{{ task.title }}</h3>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-4">
+                        {% if task.assignee %}
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-panel border border-border mono">{{ task.assignee[0]|upper }}</span>
+                        {% endif %}
+                        {% if task.due_date %}
+                        <span class="text-xs mono text-muted">{{ task.due_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if task.description %}
+                <p class="text-xs text-muted mt-2 leading-relaxed">{{ task.description[:120] }}{% if task.description|length > 120 %}…{% endif %}</p>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+            <p class="text-sm text-muted">All clear — no fires to put out.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Delegated -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-accent2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-accent2">Delegated</h2>
+        </div>
+        {% if delegated %}
+        <div class="space-y-5">
+            {% set _ = delegated|groupby('assignee') %}
+            {% for assignee, tasks in delegated|groupby('assignee') %}
+            {% if assignee %}
+            <div>
+                <div class="flex items-center gap-2 mb-2.5">
+                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mono border border-accent2/40 bg-accent2/10 text-accent2">{{ assignee[0]|upper }}</span>
+                    <span class="text-sm font-medium text-text">{{ assignee }}</span>
+                    <span class="text-xs mono text-muted">· {{ tasks|length }} task{{ 's' if tasks|length > 1 else '' }}</span>
+                </div>
+                <div class="space-y-1.5 ml-9">
+                    {% for task in tasks %}
+                    <a href="/tasks/{{ task.id }}" class="block bg-surface border border-border rounded-lg p-3 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 min-w-0">
+                                {% if task.priority %}
+                                <span class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
+                                    {% if task.priority == 'P0' %}class="bg-red-500/20 text-red-400 border border-red-500/30"{% elif task.priority == 'P1' %}class="bg-amber-500/20 text-amber-400 border border-amber-500/30"{% else %}class="bg-cyan-500/20 text-accent border border-cyan-500/30"{% endif %}>{{ task.priority }}</span>
+                                {% endif %}
+                                <h3 class="text-sm text-text truncate">{{ task.title }}</h3>
+                            </div>
+                            <span class="mono text-xs px-2 py-0.5 rounded-md shrink-0 ml-2 text-accent2 bg-accent2/10 border border-accent2/20">delegated</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+            <p class="text-sm text-muted">Nothing delegated — you've got this.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- My Active Work -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-accent">My Active Work</h2>
+        </div>
+        {% if active %}
+        <div class="space-y-2">
+            {% for task in active %}
+            <a href="/tasks/{{ task.id }}" class="block bg-surface border-l-2 border-accent/40 rounded-r-lg p-4 card-hover glow-accent">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                        {% if task.priority %}
+                        <span class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
+                            {% if task.priority == 'P0' %}class="bg-red-500/20 text-red-400 border border-red-500/30"{% elif task.priority == 'P1' %}class="bg-amber-500/20 text-amber-400 border border-amber-500/30"{% else %}class="bg-cyan-500/20 text-accent border border-cyan-500/30"{% endif %}>{{ task.priority }}</span>
+                        {% endif %}
+                        <h3 class="text-sm font-medium text-text truncate">{{ task.title }}</h3>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-4">
+                        {% if task.project_id and task.project %}
+                        <span class="mono text-xs px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">{{ task.project.name }}</span>
+                        {% endif %}
+                        {% if task.due_date %}
+                        <span class="text-xs mono text-muted">Due {{ task.due_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+            <p class="text-sm text-muted">No active tasks — breathe easy.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Backlog -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-muted">Backlog</h2>
+        </div>
+        {% if backlog %}
+        <div class="space-y-1.5">
+            {% for task in backlog %}
+            <a href="/tasks/{{ task.id }}" class="block bg-surface border border-border rounded-lg p-3 card-hover">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                        {% if task.priority %}
+                        <span class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
+                            {% if task.priority == 'P0' %}class="bg-red-500/20 text-red-400 border border-red-500/30"{% elif task.priority == 'P1' %}class="bg-amber-500/20 text-amber-400 border border-amber-500/30"{% else %}class="bg-cyan-500/20 text-accent border border-cyan-500/30"{% endif %}>{{ task.priority }}</span>
+                        {% endif %}
+                        <h3 class="text-sm text-text/80 truncate">{{ task.title }}</h3>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-4">
+                        {% if task.project_id and task.project %}
+                        <span class="mono text-xs px-2 py-0.5 rounded bg-panel text-muted border border-border">{{ task.project.name }}</span>
+                        {% endif %}
+                        {% if task.due_date %}
+                        <span class="text-xs mono text-muted">Due {{ task.due_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+            <p class="text-sm text-muted">Backlog is empty — everything's moving.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Inbox (toggleable) -->
+    <section x-show="showInbox" x-cloak class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+            <h2 class="text-xs font-semibold mono uppercase tracking-widest text-amber-400">Inbox</h2>
+        </div>
+        {% if inbox %}
+        <div class="space-y-1.5">
+            {% for task in inbox %}
+            <a href="/tasks/{{ task.id }}" class="block bg-surface border-l-2 border-amber-500/40 rounded-r-lg p-3 card-hover">
+                <h3 class="text-sm text-text/80">{{ task.title }}</h3>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+            <p class="text-sm text-muted">Inbox is clear.</p>
+        </div>
+        {% endif %}
+    </section>
+
+</div><!-- end x-data -->
+
+<!-- Inbox FAB — outside x-data, uses DOM event -->
+{% if inbox %}
+<button @click="window.dispatchEvent(new CustomEvent('toggle-inbox'))" class="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-surface border border-border flex items-center justify-center hover:border-accent/40 transition-colors glow-accent z-30">
+    <span class="text-xs font-bold mono text-accent">{{ inbox|length }}</span>
+</button>
+{% endif %}
+
+<!-- New Task Modal -->
+<div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showModal = false">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-bg/80 backdrop-blur-sm" @click="showModal = false"></div>
+
+        <div class="relative bg-surface rounded-xl border border-border w-full max-w-lg glow-accent">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 class="text-sm font-bold mono uppercase tracking-widest text-accent">New</h2>
+                <button @click="showModal = false" class="text-muted hover:text-text transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form action="/tasks/new" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Title <span class="text-red-400">*</span></label>
+                    <input type="text" name="title" required placeholder="What's on your mind?" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Description</label>
+                    <textarea name="description" rows="3" placeholder="Optional details..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Status</label>
+                        <select name="status" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="backlog">Backlog</option>
+                            <option value="active">Active</option>
+                            <option value="delegated">Delegated</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Priority</label>
+                        <select name="priority" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="">— None —</option>
+                            <option value="P0">P0 — Critical</option>
+                            <option value="P1">P1 — High</option>
+                            <option value="P2">P2 — Normal</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
+                        <input type="date" name="due_date" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
+                        <input type="text" name="assignee" placeholder="Name..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Project</label>
+                    <select name="project_id" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                        <option value="">— None — (Inbox)</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border">
+                    <button type="button" @click="showModal = false" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-muted bg-panel rounded-lg hover:text-text transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-bg bg-accent rounded-lg hover:bg-cyan-300 transition-colors">Save</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<!-- Empty state -->
-<div class="flex flex-col items-center justify-center py-24 text-center">
-    <svg class="w-16 h-16 text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-    <h2 class="text-lg font-semibold text-text mb-2">No tasks yet</h2>
-    <p class="text-sm text-muted max-w-md">Click the <span class="mono text-accent">+ New</span> button to capture your first thought or create a task.</p>
-</div>
 {% endblock %}
