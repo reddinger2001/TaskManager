@@ -39,11 +39,13 @@ def create():
         flash("Project name is required", "error")
         return redirect(url_for("projects.list_projects"))
 
+    parent_id = int(request.form["parent_id"]) if request.form.get("parent_id") else None
+
     project = Project(
         name=name,
         description=request.form.get("description", "").strip() or None,
         color=_auto_color(),
-        parent_id=int(request.form["parent_id"]) if request.form.get("parent_id") else None,
+        parent_id=parent_id,
     )
     db.session.add(project)
     db.session.commit()
@@ -54,7 +56,11 @@ def create():
 @projects_bp.route("/projects/<int:project_id>")
 def detail(project_id):
     project = Project.query.get_or_404(project_id)
-    tasks = Task.query.filter_by(project_id=project.id).order_by(Task.created_at.desc()).all()
+    # Include tasks from this project and all child projects
+    descendant_ids = project.get_descendant_ids()
+    tasks = Task.query.filter(
+        Task.project_id.in_(descendant_ids),
+    ).order_by(Task.created_at.desc()).all()
 
     # Semantic search — find related inbox items
     related_captures = []
@@ -87,7 +93,8 @@ def detail(project_id):
     except Exception:
         pass  # Graceful fallback — no related captures shown
 
-    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures)
+    all_projects = Project.query.order_by(Project.name.asc()).all()
+    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects)
 
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])
@@ -102,7 +109,11 @@ def update(project_id):
     if "color" in data:
         project.color = data["color"] or None
     if "parent_id" in data:
-        project.parent_id = int(data["parent_id"]) if data["parent_id"] else None
+        new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
+        # Prevent circular references: can't set parent to self or a descendant
+        if new_parent_id and project.is_ancestor_of(Project.query.get(new_parent_id)):
+            return {"ok": False, "error": "Cannot set parent — would create a circular reference"}, 400
+        project.parent_id = new_parent_id
 
     db.session.commit()
     return {"ok": True}

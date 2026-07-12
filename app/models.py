@@ -26,6 +26,17 @@ class Project(db.Model):
     children: Mapped[list["Project"]] = relationship(
         "Project", backref=backref("parent", remote_side="Project.id"), lazy="select"
     )
+
+    def get_descendant_ids(self, include_self=True):
+        """Get IDs of this project and all descendants (recursive)."""
+        ids = {self.id} if include_self else set()
+        for child in self.children:
+            ids.update(child.get_descendant_ids())
+        return ids
+
+    def is_ancestor_of(self, other_project):
+        """Check if this project is an ancestor of another (prevents circular refs)."""
+        return other_project.id in self.get_descendant_ids()
     tasks: Mapped[list["Task"]] = relationship("Task", backref="project", lazy="select")
     logs: Mapped[list["Log"]] = relationship("Log", backref="project", lazy="select")
 
