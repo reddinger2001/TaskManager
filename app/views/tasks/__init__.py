@@ -9,6 +9,20 @@ tasks_bp = Blueprint("tasks", __name__)
 STATUSES = ["backlog", "active", "blocked", "delegated", "done"]
 PRIORITIES = ["P0", "P1", "P2"]
 
+# Columns that can be sorted server-side
+SORT_FIELDS = {
+    "title": Task.title,
+    "status": Task.status,
+    "priority": Task.priority,
+    "due_date": Task.due_date,
+    "assignee": Task.assignee,
+    "project": Project.name,
+    "created_at": Task.created_at,
+}
+
+# Default sort: newest first
+DEFAULT_SORT = ("created_at", "desc")
+
 
 @tasks_bp.route("/tasks")
 def list_tasks():
@@ -16,20 +30,64 @@ def list_tasks():
     status = request.args.get("status", "")
     priority = request.args.get("priority", "")
     project_id = request.args.get("project_id", "")
+    assignee = request.args.get("assignee", "").strip()
+    tag = request.args.get("tag", "").strip()
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
 
-    query = Task.query
+    # Sorting
+    sort_field = request.args.get("sort", DEFAULT_SORT[0])
+    sort_order = request.args.get("order", DEFAULT_SORT[1]).lower()
+    if sort_field not in SORT_FIELDS:
+        sort_field = DEFAULT_SORT[0]
+    if sort_order not in ("asc", "desc"):
+        sort_order = DEFAULT_SORT[1]
 
+    query = Task.query.outerjoin(Project, Task.project_id == Project.id)
+
+    # Filters
     if q:
         query = query.filter(Task.title.ilike(f"%{q}%"))
     if status and status in STATUSES:
-        query = query.filter_by(status=status)
+        query = query.filter(Task.status == status)
     if priority and priority in PRIORITIES:
-        query = query.filter_by(priority=priority)
+        query = query.filter(Task.priority == priority)
     if project_id:
-        query = query.filter_by(project_id=int(project_id))
+        query = query.filter(Task.project_id == int(project_id))
+    if assignee:
+        query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
+    if tag:
+        # Filter by JSON array contains the tag (case-insensitive via SQLite)
+        query = query.filter(Task.tags.contains(f'"{tag}"'))
+    if date_from:
+        query = query.filter(Task.due_date >= date_from)
+    if date_to:
+        query = query.filter(Task.due_date <= date_to)
 
-    tasks = query.order_by(Task.created_at.desc()).all()
+    # Sorting — nulls last for nullable columns
+    sort_col = SORT_FIELDS[sort_field]
+    if sort_order == "desc":
+        sort_col = sort_col.desc()
+
+    tasks = query.order_by(sort_col, Task.created_at.desc()).all()
+
+    # Gather filter options
     projects = Project.query.order_by(Project.name).all()
+    assignees = (
+        db.session.query(Task.assignee)
+        .filter(Task.assignee.isnot(None))
+        .distinct()
+        .order_by(Task.assignee.asc())
+        .all()
+    )
+    assignees = [a[0] for a in assignees]
+
+    # All unique tags across tasks (for filter dropdown)
+    all_tags = set()
+    for t in tasks:
+        if t.tags:
+            all_tags.update(t.tags)
+    all_tags = sorted(all_tags)
 
     return render_template(
         "tasks/list.html",
@@ -37,10 +95,18 @@ def list_tasks():
         projects=projects,
         statuses=STATUSES,
         priorities=PRIORITIES,
+        assignees=assignees,
+        all_tags=all_tags,
         current_q=q,
         current_status=status,
         current_priority=priority,
         current_project_id=project_id,
+        current_assignee=assignee,
+        current_tag=tag,
+        current_date_from=date_from,
+        current_date_to=date_to,
+        sort_field=sort_field,
+        sort_order=sort_order,
     )
 
 

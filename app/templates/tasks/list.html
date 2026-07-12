@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Tasks — TaskManager{% endblock %}
 
+{% macro sort_arrow(field) -%}
+  {% if sort_field == field %}
+    {% if sort_order == 'asc' %} ▲{% else %} ▼{% endif %}
+  {% else %}
+    ↕
+  {% endif %}
+{%- endmacro %}
+
 {% block content %}
-<div x-data="{ showCapture: false }">
+<div x-data="{ showCapture: false, showFilters: false }">
 
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
@@ -91,35 +99,76 @@
 </div>
 
 <!-- Filters -->
-<div class="flex flex-wrap items-center gap-2 mb-4">
-    <form method="get" action="/tasks" class="flex flex-wrap items-center gap-2">
-        <input name="q" type="text" value="{{ current_q }}" placeholder="Search..."
-               class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-40">
+<div class="mb-4">
+    <div class="flex items-center justify-between mb-2">
+        <form method="get" action="/tasks" class="flex flex-wrap items-center gap-2">
+            <input name="q" type="text" value="{{ current_q }}" placeholder="Search..."
+                   class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-40">
 
-        <select name="status" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
-            <option value="">All Statuses</option>
-            {% for s in statuses %}
-            <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+            <select name="status" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="priority" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                <option value="">All Priorities</option>
+                {% for p in priorities %}
+                <option value="{{ p }}" {% if current_priority == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="project_id" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                <option value="">All Projects</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}" {% if current_project_id == p.id | string %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit"
+                    class="px-3 py-1.5 text-xs mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+                Filter
+            </button>
+        </form>
+
+        <button @click="showFilters = !showFilters"
+                class="px-2 py-1.5 text-xs mono text-muted border border-border rounded hover:text-text transition-colors">
+            {% if showFilters %}Hide{% else %}More{% endif %} ▾
+        </button>
+    </div>
+
+    <!-- Extended filters -->
+    <form method="get" action="/tasks" x-show="showFilters" x-cloak class="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+        <input type="hidden" name="q" value="{{ current_q }}">
+        <input type="hidden" name="status" value="{{ current_status }}">
+        <input type="hidden" name="priority" value="{{ current_priority }}">
+        <input type="hidden" name="project_id" value="{{ current_project_id }}">
+
+        <select name="assignee" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Assignees</option>
+            {% for a in assignees %}
+            <option value="{{ a }}" {% if current_assignee == a %}selected{% endif %}>{{ a }}</option>
             {% endfor %}
         </select>
 
-        <select name="priority" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
-            <option value="">All Priorities</option>
-            {% for p in priorities %}
-            <option value="{{ p }}" {% if current_priority == p %}selected{% endif %}>{{ p }}</option>
+        {% if all_tags %}
+        <select name="tag" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Tags</option>
+            {% for t in all_tags %}
+            <option value="{{ t }}" {% if current_tag == t %}selected{% endif %}>{{ t }}</option>
             {% endfor %}
         </select>
+        {% endif %}
 
-        <select name="project_id" class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
-            <option value="">All Projects</option>
-            {% for p in projects %}
-            <option value="{{ p.id }}" {% if current_project_id == p.id | string %}selected{% endif %}>{{ p.name }}</option>
-            {% endfor %}
-        </select>
+        <input type="date" name="date_from" value="{{ current_date_from }}"
+               class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+        <input type="date" name="date_to" value="{{ current_date_to }}"
+               class="px-2 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
 
         <button type="submit"
                 class="px-3 py-1.5 text-xs mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
-            Filter
+            Apply
         </button>
     </form>
 </div>
@@ -131,12 +180,42 @@
         <thead>
             <tr class="border-b border-border text-xs mono uppercase tracking-wider text-muted">
                 <th class="text-left px-4 py-2.5 w-8"></th>
-                <th class="text-left px-4 py-2.5">Title</th>
-                <th class="text-left px-4 py-2.5 w-20">Status</th>
-                <th class="text-left px-4 py-2.5 w-16">Priority</th>
-                <th class="text-left px-4 py-2.5 w-28">Due</th>
-                <th class="text-left px-4 py-2.5 w-24">Assignee</th>
-                <th class="text-left px-4 py-2.5 w-32">Project</th>
+                <th class="text-left px-4 py-2.5">
+                    <a href="?sort=title&order={% if sort_field == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Title {{ sort_arrow('title') }}
+                    </a>
+                </th>
+                <th class="text-left px-4 py-2.5 w-20">
+                    <a href="?sort=status&order={% if sort_field == 'status' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Status {{ sort_arrow('status') }}
+                    </a>
+                </th>
+                <th class="text-left px-4 py-2.5 w-16">
+                    <a href="?sort=priority&order={% if sort_field == 'priority' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Priority {{ sort_arrow('priority') }}
+                    </a>
+                </th>
+                <th class="text-left px-4 py-2.5 w-28">
+                    <a href="?sort=due_date&order={% if sort_field == 'due_date' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Due {{ sort_arrow('due_date') }}
+                    </a>
+                </th>
+                <th class="text-left px-4 py-2.5 w-24">
+                    <a href="?sort=assignee&order={% if sort_field == 'assignee' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Assignee {{ sort_arrow('assignee') }}
+                    </a>
+                </th>
+                <th class="text-left px-4 py-2.5 w-32">
+                    <a href="?sort=project&order={% if sort_field == 'project' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
+                       class="hover:text-text transition-colors">
+                        Project {{ sort_arrow('project') }}
+                    </a>
+                </th>
             </tr>
         </thead>
         <tbody>
