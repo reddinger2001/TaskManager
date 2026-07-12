@@ -55,6 +55,7 @@
     assignee: {{ (task.assignee or '') | tojson }},
     project_id: {{ task.project_id | tojson }},
     tags: {{ task.get_tags() | tojson }},
+    links: {{ task.get_links() | tojson }},
     newTag: '',
     saving: false,
     save() {
@@ -63,7 +64,7 @@
         fetch('/tasks/{{ task.id }}', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags })
+            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links })
         }).then(r => r.json()).then(() => location.reload());
     },
     addTag() {
@@ -76,6 +77,10 @@
     },
     removeTag(index) {
         this.tags.splice(index, 1);
+        this.save();
+    },
+    removeLink(index) {
+        this.links.splice(index, 1);
         this.save();
     }
 }">
@@ -169,13 +174,28 @@
     <!-- Links -->
     <div>
         <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Links</label>
-        <div class="space-y-1">
-            {% for link in task.get_links() %}
-            <a href="{{ link.url }}" target="_blank" class="text-xs mono text-accent hover:underline">{{ link.label or link.url }}</a>
-            {% endfor %}
+        <div class="space-y-2">
+            <template x-for="(link, index) in links" :key="index">
+                <div class="flex items-center gap-2">
+                    <a :href="link.url" target="_blank" class="text-xs mono text-accent hover:underline truncate flex-1"
+                       x-text="link.label || link.url"></a>
+                    <button @click="removeLink(index)" type="button" class="text-muted hover:text-red-400 transition-colors leading-none">×</button>
+                </div>
+            </template>
             {% if not task.get_links() %}
             <span class="text-xs text-muted">No links</span>
             {% endif %}
+            <!-- Add link form -->
+            <div x-data="{ url: '', label: '' }" class="flex items-center gap-2">
+                <input x-model="url" type="url" placeholder="https://..."
+                       class="px-2 py-1 text-[10px] mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 flex-1 min-w-0">
+                <input x-model="label" type="text" placeholder="Label"
+                       class="px-2 py-1 text-[10px] mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-28">
+                <button @click="if (url.trim()) { links.push({ url: url.trim(), label: label.trim() }); $parent.save(); url = ''; label = ''; }"
+                        type="button" class="px-2 py-1 text-[10px] mono text-muted border border-border rounded hover:text-text transition-colors">
+                    +
+                </button>
+            </div>
         </div>
     </div>
 

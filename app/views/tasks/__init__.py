@@ -212,6 +212,8 @@ def update(task_id):
         task.project_id = int(data["project_id"]) if data["project_id"] else None
     if "tags" in data:
         task.set_tags(data["tags"])
+    if "links" in data:
+        task.set_links(data["links"])
 
     # Handle status transitions
     if new_status == "done" and old_status != "done":
