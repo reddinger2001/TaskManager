@@ -7,26 +7,26 @@
 
     <!-- Summary Bar -->
     <div class="grid grid-cols-5 gap-3 mb-8">
-        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        <a href="/tasks?priority=P0" class="bg-surface border border-border rounded-lg p-4 card-hover no-underline">
             <div class="text-xs mono uppercase tracking-wider text-muted mb-1">On Fire</div>
             <div class="text-2xl font-bold mono" style="color: #ff5252;">{{ on_fire|length }}</div>
-        </div>
-        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        </a>
+        <a href="/tasks?status=delegated" class="bg-surface border border-border rounded-lg p-4 card-hover no-underline">
             <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Delegated</div>
             <div class="text-2xl font-bold mono" style="color: #7c4dff;">{{ delegated|length }}</div>
-        </div>
-        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        </a>
+        <a href="/tasks?status=active" class="bg-surface border border-border rounded-lg p-4 card-hover no-underline">
             <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Active</div>
             <div class="text-2xl font-bold mono" style="color: #00e5ff;">{{ active|length }}</div>
-        </div>
-        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        </a>
+        <a href="/tasks?status=backlog" class="bg-surface border border-border rounded-lg p-4 card-hover no-underline">
             <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Backlog</div>
             <div class="text-2xl font-bold mono" style="color: #6b7280;">{{ backlog|length }}</div>
-        </div>
-        <div class="bg-surface border border-border rounded-lg p-4 card-hover cursor-pointer">
+        </a>
+        <a href="/tasks?status=inbox" class="bg-surface border border-border rounded-lg p-4 card-hover no-underline">
             <div class="text-xs mono uppercase tracking-wider text-muted mb-1">Inbox</div>
             <div class="text-2xl font-bold mono" style="color: #ffc107;">{{ inbox|length }}</div>
-        </div>
+        </a>
     </div>
 
     <!-- On Fire -->
@@ -65,7 +65,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+            <svg class="w-6 h-6 mx-auto mb-2 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <p class="text-sm text-muted">All clear — no fires to put out.</p>
         </div>
         {% endif %}
@@ -109,7 +110,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+            <svg class="w-6 h-6 mx-auto mb-2 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             <p class="text-sm text-muted">Nothing delegated — you've got this.</p>
         </div>
         {% endif %}
@@ -146,7 +148,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+            <svg class="w-6 h-6 mx-auto mb-2 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
             <p class="text-sm text-muted">No active tasks — breathe easy.</p>
         </div>
         {% endif %}
@@ -183,7 +186,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+            <svg class="w-6 h-6 mx-auto mb-2 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
             <p class="text-sm text-muted">Backlog is empty — everything's moving.</p>
         </div>
         {% endif %}
@@ -204,7 +208,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-surface border border-border rounded-lg p-6 text-center">
+        <div class="bg-surface border border-border rounded-lg p-8 text-center">
+            <svg class="w-6 h-6 mx-auto mb-2 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
             <p class="text-sm text-muted">Inbox is clear.</p>
         </div>
         {% endif %}
