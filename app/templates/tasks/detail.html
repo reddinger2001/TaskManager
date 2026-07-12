@@ -54,6 +54,8 @@
     due_date: '{{ task.due_date or '' }}',
     assignee: {{ (task.assignee or '') | tojson }},
     project_id: {{ task.project_id | tojson }},
+    tags: {{ task.get_tags() | tojson }},
+    newTag: '',
     saving: false,
     save() {
         if (this.saving) return;
@@ -61,8 +63,20 @@
         fetch('/tasks/{{ task.id }}', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id })
+            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags })
         }).then(r => r.json()).then(() => location.reload());
+    },
+    addTag() {
+        const tag = this.newTag.trim().toLowerCase();
+        if (tag && !this.tags.includes(tag)) {
+            this.tags.push(tag);
+            this.newTag = '';
+            this.save();
+        }
+    },
+    removeTag(index) {
+        this.tags.splice(index, 1);
+        this.save();
     }
 }">
 
@@ -137,13 +151,18 @@
     <!-- Tags -->
     <div>
         <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Tags</label>
-        <div class="flex flex-wrap gap-1.5">
-            {% for tag in task.get_tags() %}
-            <span class="px-2 py-0.5 text-[10px] mono bg-accent/10 text-accent rounded">{{ tag }}</span>
-            {% endfor %}
-            {% if not task.get_tags() %}
-            <span class="text-xs text-muted">No tags</span>
-            {% endif %}
+        <div class="flex flex-wrap items-center gap-1.5">
+            <template x-for="(tag, index) in tags" :key="index">
+                <span class="px-2 py-0.5 text-[10px] mono bg-accent/10 text-accent rounded flex items-center gap-1">
+                    <span x-text="tag"></span>
+                    <button @click="removeTag(index)" type="button" class="text-accent/60 hover:text-red-400 transition-colors leading-none">×</button>
+                </span>
+            </template>
+            <input x-model="newTag"
+                   @keydown.enter.prevent="addTag()"
+                   @keydown.backspace.prevent="if (!newTag && tags.length) { removeTag(tags.length - 1); }"
+                   type="text" placeholder="Add tag..."
+                   class="px-2 py-0.5 text-[10px] mono bg-transparent border border-dashed border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-24">
         </div>
     </div>
 
