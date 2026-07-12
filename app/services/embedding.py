@@ -80,6 +80,72 @@ def search_similar(query_text: str, limit: int = 5, exclude_ids: List[int] | Non
         conn.close()
 
 
+def hybrid_search(query_text: str, limit: int = 50, semantic_weight: float = 0.6) -> List[tuple]:
+    """Combine FTS5 keyword results with sqlite-vec semantic results.
+
+    Returns list of (task_id, combined_score) tuples sorted by relevance.
+    Score is normalized to 0-1 range where 1 = most relevant.
+    """
+    from app.extensions import get_vec_connection
+
+    # --- Keyword search via FTS5 ---
+    keyword_map = {}  # task_id -> normalized_rank (0-1)
+    try:
+        conn = get_vec_connection()
+        cursor = conn.execute(
+            "SELECT task_id, rank FROM search_index WHERE search_index MATCH ? ORDER BY rank LIMIT ?",
+            (query_text, limit),
+        )
+        rows = cursor.fetchall()
+        if rows:
+            ranks = [row[1] for row in rows]
+            min_rank = min(ranks)
+            max_rank = max(ranks)
+            rank_range = max_rank - min_rank if max_rank != min_rank else 1.0
+            for row in rows:
+                # FTS5 rank is negative — lower (more negative) = more relevant
+                normalized = 1.0 - ((row[1] - min_rank) / rank_range)
+                keyword_map[row[0]] = normalized
+        conn.close()
+    except Exception:
+        logger.exception("FTS5 search failed in hybrid_search")
+
+    # --- Semantic search via sqlite-vec ---
+    semantic_map = {}  # task_id -> normalized_score (0-1)
+    try:
+        vec = embed(query_text)
+        vec_json = json.dumps(vec)
+        conn = get_vec_connection()
+        rows = conn.execute(
+            "SELECT task_id, distance FROM task_embeddings WHERE embedding MATCH ? LIMIT ?",
+            (vec_json, limit),
+        ).fetchall()
+        if rows:
+            distances = [row[1] for row in rows]
+            min_dist = min(distances)
+            max_dist = max(distances)
+            dist_range = max_dist - min_dist if max_dist != min_dist else 1.0
+            for row in rows:
+                # distance 0 = perfect match, normalize so 0 -> 1.0
+                normalized = 1.0 - ((row[1] - min_dist) / dist_range)
+                semantic_map[row[0]] = normalized
+        conn.close()
+    except Exception:
+        logger.exception("Semantic search failed in hybrid_search")
+
+    # --- Combine scores ---
+    all_ids = set(keyword_map.keys()) | set(semantic_map.keys())
+    results = []
+    for task_id in all_ids:
+        kw_score = keyword_map.get(task_id, 0.0)
+        sem_score = semantic_map.get(task_id, 0.0)
+        combined = (1 - semantic_weight) * kw_score + semantic_weight * sem_score
+        results.append((task_id, round(combined, 4)))
+
+    results.sort(key=lambda x: x[1], reverse=True)
+    return results
+
+
 def _flush_pending():
     """Process all pending embeddings. Called after commit when DB is free."""
     global _pending_embeddings

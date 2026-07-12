@@ -78,40 +78,59 @@ def index():
 def search():
     q = request.args.get("q", "").strip()
     if not q:
-        return render_template("search.html", q="", results=[], total=0)
+        return render_template("search.html", q="", task_results=[], log_results=[], project_results=[], total=0)
+
+    use_semantic = request.args.get("semantic", "true").lower() == "true"
 
     task_results = []
+    task_scores = {}  # task_id -> combined_score for display
     log_results = []
     project_results = []
     total = 0
 
-    # Query FTS5 for tasks
-    try:
-        raw_conn = db.engine.raw_connection()
-        cursor = raw_conn.execute(
-            "SELECT task_id, rank FROM search_index WHERE search_index MATCH ? ORDER BY rank LIMIT 50",
-            (q,),
-        )
-        rows = cursor.fetchall()
-        total += len(rows)
+    if use_semantic:
+        # Hybrid search: combine FTS5 keyword + sqlite-vec semantic
+        try:
+            from app.services.embedding import hybrid_search
+            results = hybrid_search(q, limit=50, semantic_weight=0.6)
+            if results:
+                task_ids = [row[0] for row in results]
+                tasks = db.session.query(Task).filter(Task.id.in_(task_ids)).all()
+                score_map = {row[0]: row[1] for row in results}
+                for t in sorted(tasks, key=lambda x: score_map.get(x.id, 0), reverse=True):
+                    task_results.append(t)
+                    task_scores[t.id] = score_map.get(t.id, 0)
+                total += len(task_results)
+        except Exception as e:
+            app.logger.warning(f"Hybrid search failed: {e}")
+    else:
+        # Keyword-only search via FTS5
+        try:
+            raw_conn = db.engine.raw_connection()
+            cursor = raw_conn.execute(
+                "SELECT task_id, rank FROM search_index WHERE search_index MATCH ? ORDER BY rank LIMIT 50",
+                (q,),
+            )
+            rows = cursor.fetchall()
+            total += len(rows)
 
-        if rows:
-            task_ids = [row[0] for row in rows]
-            tasks = db.session.query(Task).filter(Task.id.in_(task_ids)).all()
-            rank_map = {row[0]: row[1] for row in rows}
-            for t in sorted(tasks, key=lambda x: rank_map.get(x.id, 0)):
-                task_results.append(t)
-        raw_conn.close()
-    except Exception as e:
-        app.logger.warning(f"FTS5 search failed: {e}")
+            if rows:
+                task_ids = [row[0] for row in rows]
+                tasks = db.session.query(Task).filter(Task.id.in_(task_ids)).all()
+                rank_map = {row[0]: row[1] for row in rows}
+                for t in sorted(tasks, key=lambda x: rank_map.get(x.id, 0)):
+                    task_results.append(t)
+            raw_conn.close()
+        except Exception as e:
+            app.logger.warning(f"FTS5 search failed: {e}")
 
-    # Also search projects by name (no FTS5 for projects yet — simple ilike)
+    # Also search projects by name (simple ilike)
     if q:
         projects = db.session.query(Project).filter(Project.name.ilike(f"%{q}%")).order_by(Project.name).all()
         project_results = projects
         total += len(projects)
 
-    # Search logs by title/notes (simple ilike for now)
+    # Search logs by title/notes (simple ilike)
     if q:
         logs = (
             db.session.query(Log)
@@ -143,4 +162,6 @@ def search():
         project_results=project_results,
         total=total,
         highlight=highlight,
+        use_semantic=use_semantic,
+        task_scores=task_scores,
     )
