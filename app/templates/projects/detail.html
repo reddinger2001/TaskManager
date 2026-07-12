@@ -121,6 +121,28 @@
     </div>
 </div>
 
+<!-- Related Captures (semantic search) -->
+{% if related_captures %}
+<div class="mb-6">
+    <h3 class="text-xs font-bold mono uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        Related Captures ({{ related_captures|length }})
+    </h3>
+    <div class="bg-panel border border-border rounded-lg divide-y divide-border">
+        {% for rc in related_captures %}
+        <a href="/tasks/{{ rc.id }}" class="block px-4 py-2.5 hover:bg-surface/50 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full flex-shrink-0"
+                      style="background: {% if rc.status == 'done' %}#69f0ae{% elif rc.status == 'active' %}#00e5ff{% elif rc.status == 'blocked' %}#ff8a65{% elif rc.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                <span class="text-sm text-text {% if rc.status == 'done' %}line-through text-muted{% endif %}">{{ rc.title }}</span>
+                <span class="text-[10px] mono text-muted ml-auto">{{ rc.created_at.strftime('%Y-%m-%d') }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Tasks -->
 <h3 class="text-sm font-bold mono uppercase tracking-wider text-accent mb-4">Tasks</h3>
 

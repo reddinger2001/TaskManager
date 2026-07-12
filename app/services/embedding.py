@@ -49,6 +49,37 @@ def embed_batch(texts: List[str]) -> List[List[float]]:
     return vecs.tolist()
 
 
+def search_similar(query_text: str, limit: int = 5, exclude_ids: List[int] | None = None) -> List[tuple]:
+    """Search for tasks similar to the query text using cosine similarity.
+
+    Returns list of (task_id, distance) tuples sorted by relevance (closest first).
+    Distance is cosine distance — lower means more similar (0 = identical, 1 = opposite).
+    """
+    from app.extensions import get_vec_connection
+
+    vec = embed(query_text)
+    vec_json = json.dumps(vec)
+
+    conn = get_vec_connection()
+    try:
+        sql = "SELECT task_id, distance FROM task_embeddings WHERE embedding MATCH ? LIMIT ?"
+        params = [vec_json, limit]
+
+        rows = conn.execute(sql, params).fetchall()
+        results = [(row[0], row[1]) for row in rows]
+
+        # Filter out excluded IDs
+        if exclude_ids:
+            results = [(tid, dist) for tid, dist in results if tid not in set(exclude_ids)]
+
+        return results
+    except Exception:
+        logger.exception("Failed to search embeddings")
+        return []
+    finally:
+        conn.close()
+
+
 def _flush_pending():
     """Process all pending embeddings. Called after commit when DB is free."""
     global _pending_embeddings
