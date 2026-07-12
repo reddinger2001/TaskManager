@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Board — TaskManager{% endblock %}
+
+{% block content %}
+<div x-data="board()">
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold mono tracking-wider text-text">BOARD</h2>
+    <div class="flex items-center gap-2">
+        <select x-model="filterProject" @change="applyFilters()"
+                class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Projects</option>
+            {% for p in projects %}
+            <option value="{{ p.id }}"{% if project_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+        <select x-model="filterAssignee" @change="applyFilters()"
+                class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            <option value="">All Assignees</option>
+            {% for a in assignees %}
+            <option value="{{ a }}"{% if assignee == a %} selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Board -->
+<div class="flex gap-3 overflow-x-auto pb-4" style="min-width: 1100px; min-height: calc(100vh - 12rem);">
+
+    <template x-for="status in statuses" :key="status.key">
+        <div class="flex-shrink-0 w-72 flex flex-col rounded-xl overflow-hidden border border-border/60 column-bg"
+             @dragover.prevent="dropTarget = status.key"
+             @dragleave="dropTarget = null"
+             @drop="onDrop($event, status.key)">
+
+            <!-- Column Header -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-border/60">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full" :style="'background: ' + status.color + '; box-shadow: 0 0 8px ' + status.color + '60;'"></span>
+                    <h2 class="text-xs font-semibold mono uppercase tracking-widest" :style="'color: ' + status.color" x-text="status.label"></h2>
+                </div>
+                <span class="mono text-xs px-1.5 py-0.5 rounded bg-panel border border-border" x-text="filteredTasks(status.key).length"></span>
+            </div>
+
+            <!-- Cards -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                <template x-for="task in filteredTasks(status.key)" :key="task.id">
+                    <a :href="'/tasks/' + task.id"
+                       class="block bg-surface border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all no-underline"
+                       draggable="true"
+                       @dragstart.prevent="onDragStart($event, task)"
+                       @dragend="onDragEnd($event)">
+
+                        <!-- Priority + Title -->
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span x-show="task.priority" class="mono text-xs font-bold px-1.5 py-0.5 rounded shrink-0" :class="priorityClass(task.priority)" x-text="task.priority"></span>
+                                <h3 class="text-sm font-medium text-text truncate" x-text="task.title"></h3>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <p x-show="task.description" class="text-xs text-muted mt-1.5 line-clamp-2 leading-relaxed" x-text="task.description"></p>
+
+                        <!-- Footer -->
+                        <div class="flex items-center justify-between mt-2.5">
+                            <div class="flex items-center gap-2">
+                                <span x-show="task.assignee" class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mono border shrink-0" :style="'background: ' + stringToColor(task.assignee) + '15; color: ' + stringToColor(task.assignee) + '; border-color: ' + stringToColor(task.assignee) + '30;'" x-text="task.assignee.charAt(0).toUpperCase()"></span>
+                                <span x-show="task.project" class="text-xs text-muted truncate max-w-[7rem]" x-text="task.project"></span>
+                            </div>
+                            <span x-show="task.due_date" class="text-xs mono" :class="isOverdue(task.due_date) ? 'text-red-400' : 'text-muted'" x-text="formatDate(task.due_date)"></span>
+                        </div>
+
+                        <!-- Tags -->
+                        <div x-show="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1 mt-2">
+                            <template x-for="tag in task.tags" :key="tag">
+                                <span class="mono text-xs px-1.5 py-0.5 rounded bg-panel text-muted border border-border" x-text="'#' + tag"></span>
+                            </template>
+                        </div>
+                    </a>
+                </template>
+
+                <div x-show="filteredTasks(status.key).length === 0" class="text-center py-8">
+                    <span class="text-xs mono text-muted/50">— empty —</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+</div>
+
+</div><!-- end x-data -->
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function board() {
+    return {
+        filterProject: '{{ project_id }}',
+        filterAssignee: '{{ assignee }}',
+        draggedTask: null,
+        dropTarget: null,
+
+        statuses: [
+            { key: 'backlog',   label: 'Backlog',   color: '#6b7280' },
+            { key: 'active',    label: 'Active',     color: '#00e5ff' },
+            { key: 'delegated', label: 'Delegated',  color: '#7c4dff' },
+            { key: 'blocked',   label: 'Blocked',    color: '#ff5252' },
+            { key: 'done',      label: 'Done',       color: '#69f0ae' },
+        ],
+
+        tasks: {{ task_data | tojson }},
+
+        filteredTasks(status) {
+            let tasks = this.tasks.filter(t => t.status === status);
+            if (this.filterProject) {
+                tasks = tasks.filter(t => t.project_id == this.filterProject);
+            }
+            if (this.filterAssignee) {
+                tasks = tasks.filter(t => t.assignee === this.filterAssignee);
+            }
+            return tasks;
+        },
+
+        applyFilters() {
+            // Filters are reactive via Alpine — no action needed
+        },
+
+        onDragStart(event, task) {
+            this.draggedTask = task;
+            event.target.classList.add('opacity-40', 'scale-95');
+            event.dataTransfer.effectAllowed = 'move';
+        },
+        onDragEnd(event) {
+            event.target.classList.remove('opacity-40', 'scale-95');
+            this.draggedTask = null;
+        },
+        onDrop(event, statusKey) {
+            event.preventDefault();
+            if (this.draggedTask && this.draggedTask.status !== statusKey) {
+                fetch('/tasks/' + this.draggedTask.id, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: statusKey })
+                }).then(r => r.json()).then(data => {
+                    if (data.ok) {
+                        this.draggedTask.status = statusKey;
+                    } else {
+                        alert('Failed to update task: ' + (data.error || 'unknown error'));
+                    }
+                }).catch(err => {
+                    alert('Network error updating task');
+                    console.error(err);
+                });
+            }
+            this.dropTarget = null;
+        },
+
+        priorityClass(p) {
+            if (p === 'P0') return 'bg-red-500/20 text-red-400 border border-red-500/30';
+            if (p === 'P1') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            if (p === 'P2') return 'bg-cyan-500/20 text-accent border border-cyan-500/30';
+            return '';
+        },
+
+        formatDate(d) {
+            if (!d) return '';
+            const date = new Date(d);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        },
+
+        isOverdue(d) {
+            if (!d) return false;
+            const today = new Date(); today.setHours(0,0,0,0);
+            return new Date(d) < today;
+        },
+
+        stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            const colors = ['#00e5ff', '#7c4dff', '#ff5252', '#ffc107', '#69f0ae', '#ff6e40'];
+            return colors[Math.abs(hash) % colors.length];
+        }
+    }
+}
+</script>
+{% endblock %}

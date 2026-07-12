@@ -4,6 +4,7 @@ from flask import Blueprint, current_app as app, request, render_template
 from markupsafe import Markup
 
 from app.models import Log, Project, Task, db
+from datetime import datetime
 
 main_bp = Blueprint("main", __name__)
 
@@ -164,4 +165,48 @@ def search():
         highlight=highlight,
         use_semantic=use_semantic,
         task_scores=task_scores,
+    )
+
+
+@main_bp.route("/board")
+def board():
+    project_id = request.args.get("project_id", "").strip()
+    assignee = request.args.get("assignee", "").strip()
+
+    query = db.session.query(Task)
+    if project_id:
+        query = query.filter(Task.project_id == int(project_id))
+    if assignee:
+        query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
+
+    tasks = query.order_by(Task.created_at.desc()).all()
+    projects = Project.query.order_by(Project.name).all()
+
+    # Collect unique assignees
+    assignees = sorted(set(t.assignee for t in tasks if t.assignee))
+
+    # Serialize tasks for Alpine.js
+    task_data = []
+    for t in tasks:
+        tags = t.get_tags() if t.tags else []
+        task_data.append({
+            "id": t.id,
+            "title": t.title,
+            "description": (t.description or "")[:200],
+            "status": t.status,
+            "priority": t.priority or "",
+            "assignee": t.assignee or "",
+            "project": t.project.name if t.project else "",
+            "project_id": t.project_id,
+            "due_date": t.due_date.isoformat() if t.due_date else "",
+            "tags": tags,
+        })
+
+    return render_template(
+        "board.html",
+        task_data=task_data,
+        projects=projects,
+        assignees=assignees,
+        project_id=project_id,
+        assignee=assignee,
     )
