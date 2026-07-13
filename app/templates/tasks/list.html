@@ -10,7 +10,7 @@
 {%- endmacro %}
 
 {% block content %}
-<div x-data="{ showCapture: false, showFilters: false }">
+<div x-data="{ showCapture: false, showFilters: false }" @open-modal.window="showCapture = true">
 
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">

@@ -47,7 +47,7 @@
             <span class="text-xs mono uppercase tracking-widest text-muted">Task</span>
         </div>
         <!-- Timeline -->
-        <div class="flex-1 overflow-x-auto" id="timeline-scroll">
+        <div class="flex-1 overflow-x-auto" id="timeline-scroll" x-ref="timelineScroll">
             <div :style="'width: ' + timelineWidth + 'px'">
                 <div class="flex relative" :style="'width: ' + timelineWidth + 'px'">
                     <template x-for="day in days" :key="day.key">
@@ -76,7 +76,7 @@
                     <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
                 </a>
                 <!-- Timeline bar -->
-                <div class="flex-1 relative py-2 overflow-hidden">
+                <div class="flex-1 relative py-2 overflow-x-auto overflow-y-hidden" x-ref="rowScroll">
                     <svg :style="'width: ' + timelineWidth + 'px; height: 36px;'">
                         <!-- Today line -->
                         <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
@@ -218,7 +218,19 @@ function gantt() {
             { key: 'done', color: '#69f0ae' },
         ],
 
-        applyFilters() {}
+        applyFilters() {},
+
+        init() {
+            this.$nextTick(() => {
+                const header = document.getElementById('timeline-scroll');
+                if (header) {
+                    header.addEventListener('scroll', () => {
+                        const rows = document.querySelectorAll('.overflow-x-auto.overflow-y-hidden');
+                        rows.forEach(row => { row.scrollLeft = header.scrollLeft; });
+                    });
+                }
+            });
+        }
     };
 }
 </script>

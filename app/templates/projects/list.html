@@ -2,7 +2,7 @@
 {% block title %}Projects — TaskManager{% endblock %}
 
 {% block content %}
-<div x-data="{ showCreate: false }">
+<div x-data="{ showCreate: false }" @open-modal.window="showCreate = true">
 
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
