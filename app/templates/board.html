@@ -253,7 +253,7 @@ function board() {
             this.draggedTask = task;
             this.wasDragged = true;
             event.target.classList.add('opacity-40', 'scale-95');
-            event.dataTransfer.effectAllowed = 'move';
+            if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
         },
         onDragEnd(event) {
             event.target.classList.remove('opacity-40', 'scale-95');
@@ -261,14 +261,15 @@ function board() {
         },
         onDrop(event, statusKey) {
             event.preventDefault();
-            if (this.draggedTask && this.draggedTask.status !== statusKey) {
-                fetch('/tasks/' + this.draggedTask.id, {
+            const task = this.draggedTask;
+            if (task && task.status !== statusKey) {
+                fetch('/tasks/' + task.id, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: statusKey })
                 }).then(r => r.json()).then(data => {
                     if (data.ok) {
-                        this.draggedTask.status = statusKey;
+                        task.status = statusKey;
                     } else {
                         alert('Failed to update task: ' + (data.error || 'unknown error'));
                     }
