@@ -15,10 +15,27 @@
     .fc .fc-event { border-radius: 4px; padding: 0 6px; font-size: 0.7rem; cursor: pointer; }
     .fc-theme-standard td, .fc-theme-standard th { border-color: #1a233240 !important; }
     .fc .fc-daygrid-day-frame { min-height: 80px; }
+
+    @media print {
+        .no-print, nav, header, .fixed { display: none !important; }
+        body { background: white !important; color: #1a2332 !important; }
+        .bg-panel { background: white !important; border-color: #ddd !important; }
+        .fc .fc-toolbar-title { color: #0a0e17 !important; }
+        .fc .fc-button { display: none !important; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #ccc !important; }
+        .fc .fc-event { border: 1px solid #333 !important; color: #000 !important; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="flex items-center justify-between mb-4 no-print">
+    <h2 class="text-lg font-bold mono tracking-wider text-text">CALENDAR</h2>
+    <button @click="$window.print()"
+            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
+        Export PDF
+    </button>
+</div>
 <div class="bg-panel border border-border rounded-xl p-5">
     <div id="calendar"></div>
 </div>
