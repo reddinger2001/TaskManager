@@ -47,48 +47,7 @@
 
 <!-- Task Form -->
 <script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'due_date': task.due_date or '', 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links() } | tojson }}</script>
-<div x-data="{
-    title: '',
-    description: '',
-    status: '',
-    priority: '',
-    due_date: '',
-    assignee: '',
-    project_id: null,
-    tags: [],
-    links: [],
-    newTag: '',
-    saving: false,
-    init() {
-        const data = JSON.parse(document.getElementById('task-data').textContent);
-        Object.assign(this, data);
-    },
-    save() {
-        if (this.saving) return;
-        this.saving = true;
-        fetch('/tasks/{{ task.id }}', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links })
-        }).then(r => r.json()).then(() => location.reload());
-    },
-    addTag() {
-        const tag = this.newTag.trim().toLowerCase();
-        if (tag && !this.tags.includes(tag)) {
-            this.tags.push(tag);
-            this.newTag = '';
-            this.save();
-        }
-    },
-    removeTag(index) {
-        this.tags.splice(index, 1);
-        this.save();
-    },
-    removeLink(index) {
-        this.links.splice(index, 1);
-        this.save();
-    }
-}">
+<div x-data="taskForm()">
 
 <div class="bg-panel border border-border rounded-lg p-5 mb-6 space-y-4">
 
@@ -196,7 +155,7 @@
                        class="px-2 py-1 text-[10px] mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 flex-1 min-w-0">
                 <input x-model="label" type="text" placeholder="Label"
                        class="px-2 py-1 text-[10px] mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 w-28">
-                <button @click="if (url.trim()) { links.push({ url: url.trim(), label: label.trim() }); $parent.save(); url = ''; label = ''; }"
+                <button @click="if (url.trim()) { $parent.links.push({ url: url.trim(), label: label.trim() }); $parent.save(); url = ''; label = ''; }"
                         type="button" class="px-2 py-1 text-[10px] mono text-muted border border-border rounded hover:text-text transition-colors">
                     +
                 </button>
@@ -216,7 +175,7 @@
 
 </div>
 
-</div><!-- /x-data -->
+</div><!-- /x-data taskForm -->
 
 <!-- Related Captures (semantic search) -->
 {% if related_captures %}
@@ -308,4 +267,54 @@
 </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function taskForm() {
+    const data = JSON.parse(document.getElementById('task-data').textContent);
+    return {
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        due_date: data.due_date,
+        assignee: data.assignee,
+        project_id: data.project_id,
+        tags: data.tags,
+        links: data.links,
+        newTag: '',
+        saving: false,
+
+        save() {
+            if (this.saving) return;
+            this.saving = true;
+            fetch('/tasks/{{ task.id }}', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links })
+            }).then(r => r.json()).then(() => location.reload());
+        },
+
+        addTag() {
+            const tag = this.newTag.trim().toLowerCase();
+            if (tag && !this.tags.includes(tag)) {
+                this.tags.push(tag);
+                this.newTag = '';
+                this.save();
+            }
+        },
+
+        removeTag(index) {
+            this.tags.splice(index, 1);
+            this.save();
+        },
+
+        removeLink(index) {
+            this.links.splice(index, 1);
+            this.save();
+        }
+    };
+}
+</script>
 {% endblock %}

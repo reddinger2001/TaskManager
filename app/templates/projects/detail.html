@@ -27,25 +27,8 @@
 </div>
 
 <!-- Edit Modal -->
-<script type="application/json" id="project-data">{{ { 'name': project.name, 'description': project.description or '', 'color': project.color or '#1a2332', 'parent_id': project.parent_id } | tojson }}</script>
 <div x-show="showEdit" x-cloak
-     x-data="{
-         name: '',
-         description: '',
-         color: '#1a2332',
-         parent_id: null,
-         init() {
-             const data = JSON.parse(document.getElementById('project-data').textContent);
-             Object.assign(this, data);
-         },
-         saveProject() {
-             fetch('/projects/{{ project.id }}', {
-                 method: 'PATCH',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ name, description, color, parent_id })
-             }).then(r => r.json()).then(() => location.reload());
-         }
-     }"
+     x-data="projectForm()"
      class="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm"
      @keydown.escape.window="showEdit = false">
     <div class="bg-panel border border-border rounded-lg w-full max-w-md p-6 glow-accent2">
@@ -256,4 +239,25 @@
 </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function projectForm() {
+    return {
+        name: '{{ project.name | e }}',
+        description: `{{ project.description or '' | e }}`,
+        color: '{{ project.color or "#1a2332" }}',
+        parent_id: {{ project.parent_id | tojson }},
+
+        saveProject() {
+            fetch('/projects/{{ project.id }}', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: this.name, description: this.description, color: this.color, parent_id: this.parent_id })
+            }).then(r => r.json()).then(() => location.reload());
+        }
+    };
+}
+</script>
 {% endblock %}
