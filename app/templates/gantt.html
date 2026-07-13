@@ -40,15 +40,17 @@
 <!-- Gantt Chart -->
 <div class="bg-panel border border-border rounded-xl overflow-hidden" x-show="tasks.length > 0">
 
-    <!-- Timeline Header -->
-    <div class="flex border-b border-border">
-        <!-- Task labels column -->
-        <div class="w-[280px] flex-shrink-0 px-4 py-2.5 border-r border-border bg-panel">
-            <span class="text-xs mono uppercase tracking-widest text-muted">Task</span>
-        </div>
-        <!-- Timeline -->
-        <div class="flex-1 overflow-x-auto" id="timeline-scroll" x-ref="timelineScroll">
-            <div :style="'width: ' + timelineWidth + 'px'">
+    <!-- Single scrollable container -->
+    <div class="overflow-x-auto" id="timeline-scroll">
+        <div :style="'width: ' + (280 + timelineWidth) + 'px;'">
+
+            <!-- Timeline Header Row -->
+            <div class="flex border-b border-border">
+                <!-- Task labels column header -->
+                <div class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel">
+                    <span class="text-xs mono uppercase tracking-widest text-muted">Task</span>
+                </div>
+                <!-- Date headers -->
                 <div class="flex relative" :style="'width: ' + timelineWidth + 'px'">
                     <template x-for="day in days" :key="day.key">
                         <div class="flex-shrink-0 text-center border-r border-border/30"
@@ -62,46 +64,47 @@
                     </template>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Task Rows -->
-    <div class="max-h-[600px] overflow-y-auto">
-        <template x-for="task in tasks" :key="task.id">
-            <div class="flex border-b border-border/30 hover:bg-surface/50 transition-colors group">
-                <!-- Task label -->
-                <a :href="'/tasks/' + task.id"
-                   class="w-[280px] flex-shrink-0 px-4 py-2.5 border-r border-border flex items-center gap-2 no-underline">
-                    <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background: ' + statusColor(task.status)"></span>
-                    <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
-                </a>
-                <!-- Timeline bar -->
-                <div class="flex-1 relative py-2 overflow-x-auto overflow-y-hidden" x-ref="rowScroll">
-                    <svg :style="'width: ' + timelineWidth + 'px; height: 36px;'">
-                        <!-- Today line -->
-                        <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
-                        <!-- Task bar -->
-                        <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="taskBarWidth(task)" height="20" rx="4"
-                              x-bind:fill="statusColor(task.status) + '30'"
-                              x-bind:stroke="statusColor(task.status)"
-                              stroke-width="1.5"
-                              class="cursor-pointer transition-all"
-                              @click="$event.preventDefault(); window.location.href = '/tasks/' + task.id">
-                        </rect>
-                        <!-- Task label on bar -->
-                        <text x-bind:x="taskBarX(task) + taskBarWidth(task) / 2" y="22" text-anchor="middle"
-                              class="fill-text text-[9px] mono pointer-events-none"
-                              x-text="task.start_date + ' → ' + task.due_date"></text>
-                        <!-- Recurrence indicator -->
-                        <text x-bind:x="taskBarX(task) + taskBarWidth(task) - 2" y="14" text-anchor="end"
-                              class="fill-accent text-[10px] pointer-events-none"
-                              :opacity="task.recurrence ? 1 : 0">
-                            ↻
-                        </text>
-                    </svg>
-                </div>
+            <!-- Task Rows -->
+            <div class="max-h-[600px] overflow-y-auto">
+                <template x-for="task in tasks" :key="task.id">
+                    <div class="flex border-b border-border/30 hover:bg-surface/50 transition-colors group">
+                        <!-- Task label (sticky left) -->
+                        <a :href="'/tasks/' + task.id"
+                           class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel flex items-center gap-2 no-underline">
+                            <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background: ' + statusColor(task.status)"></span>
+                            <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
+                        </a>
+                        <!-- Timeline bar -->
+                        <div class="flex-1 relative py-2">
+                            <svg :style="'width: ' + timelineWidth + 'px; height: 36px;'">
+                                <!-- Today line -->
+                                <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
+                                <!-- Task bar -->
+                                <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="taskBarWidth(task)" height="20" rx="4"
+                                      x-bind:fill="statusColor(task.status) + '30'"
+                                      x-bind:stroke="statusColor(task.status)"
+                                      stroke-width="1.5"
+                                      class="cursor-pointer transition-all"
+                                      @click="$event.preventDefault(); window.location.href = '/tasks/' + task.id">
+                                </rect>
+                                <!-- Task label on bar -->
+                                <text x-bind:x="taskBarX(task) + taskBarWidth(task) / 2" y="22" text-anchor="middle"
+                                      class="fill-text text-[9px] mono pointer-events-none"
+                                      x-text="task.start_date + ' → ' + task.due_date"></text>
+                                <!-- Recurrence indicator -->
+                                <text x-bind:x="taskBarX(task) + taskBarWidth(task) - 2" y="14" text-anchor="end"
+                                      class="fill-accent text-[10px] pointer-events-none"
+                                      :opacity="task.recurrence ? 1 : 0">
+                                    ↻
+                                </text>
+                            </svg>
+                        </div>
+                    </div>
+                </template>
             </div>
-        </template>
+
+        </div>
     </div>
 </div>
 
@@ -218,19 +221,7 @@ function gantt() {
             { key: 'done', color: '#69f0ae' },
         ],
 
-        applyFilters() {},
-
-        init() {
-            this.$nextTick(() => {
-                const header = document.getElementById('timeline-scroll');
-                if (header) {
-                    header.addEventListener('scroll', () => {
-                        const rows = document.querySelectorAll('.overflow-x-auto.overflow-y-hidden');
-                        rows.forEach(row => { row.scrollLeft = header.scrollLeft; });
-                    });
-                }
-            });
-        }
+        applyFilters() {}
     };
 }
 </script>
