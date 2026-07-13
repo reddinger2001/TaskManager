@@ -98,9 +98,16 @@
         </div>
         <div>
             <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
-            <input x-model="assignee" type="text"
+            <input x-model="assignee" type="text" list="assignee-options"
                    @keydown.enter.prevent="save()"
-                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                   @change="save()"
+                   placeholder="Select or type..."
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40">
+            <datalist id="assignee-options">
+                {% for a in assignees %}
+                <option value="{{ a }}"></option>
+                {% endfor %}
+            </datalist>
         </div>
     </div>
 

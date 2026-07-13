@@ -230,6 +230,7 @@ def create():
 def detail(task_id):
     task = Task.query.get_or_404(task_id)
     projects = Project.query.order_by(Project.name).all()
+    assignees = sorted(set(t.assignee for t in Task.query.filter(Task.assignee.isnot(None)).all() if t.assignee))
 
     # Semantic search — find related inbox items
     related_captures = []
@@ -260,6 +261,7 @@ def detail(task_id):
         "tasks/detail.html",
         task=task,
         projects=projects,
+        assignees=assignees,
         statuses=STATUSES,
         priorities=PRIORITIES,
         related_captures=related_captures,
