@@ -31,7 +31,7 @@
 {% block content %}
 <div class="flex items-center justify-between mb-4 no-print">
     <h2 class="text-lg font-bold mono tracking-wider text-text">CALENDAR</h2>
-    <button @click="$window.print()"
+    <button onclick="window.print()"
             class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
         Export PDF
     </button>

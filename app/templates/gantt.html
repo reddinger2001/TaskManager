@@ -30,7 +30,7 @@
             <option value="{{ p.id }}"{% if project_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
             {% endfor %}
         </select>
-        <button @click="$window.print()"
+        <button onclick="window.print()"
                 class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
             Export PDF
         </button>
