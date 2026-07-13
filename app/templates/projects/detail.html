@@ -27,12 +27,17 @@
 </div>
 
 <!-- Edit Modal -->
+<script type="application/json" id="project-data">{{ { 'name': project.name, 'description': project.description or '', 'color': project.color or '#1a2332', 'parent_id': project.parent_id } | tojson }}</script>
 <div x-show="showEdit" x-cloak
      x-data="{
-         name: {{ project.name | tojson }},
-         description: {{ (project.description or '') | tojson }},
-         color: '{{ project.color or '#1a2332' }}',
-         parent_id: {{ project.parent_id | tojson }},
+         name: '',
+         description: '',
+         color: '#1a2332',
+         parent_id: null,
+         init() {
+             const data = JSON.parse(document.getElementById('project-data').textContent);
+             Object.assign(this, data);
+         },
          saveProject() {
              fetch('/projects/{{ project.id }}', {
                  method: 'PATCH',

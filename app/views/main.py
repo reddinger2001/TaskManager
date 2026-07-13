@@ -25,7 +25,7 @@ def index():
     # Delegated: tasks with status=delegated, grouped by assignee
     delegated = (
         db.session.query(Task)
-        .filter(Task.status == "delegated")
+        .filter(Task.status == "delegated", Task.assignee.isnot(None))
         .order_by(Task.assignee, Task.created_at.desc())
         .all()
     )
@@ -198,7 +198,7 @@ def board():
             "assignee": t.assignee or "",
             "project": t.project.name if t.project else "",
             "project_id": t.project_id,
-            "due_date": t.due_date.isoformat() if t.due_date else "",
+            "due_date": t.due_date if t.due_date else "",
             "tags": tags,
         })
 

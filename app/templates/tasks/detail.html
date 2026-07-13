@@ -46,18 +46,23 @@
 </div>
 
 <!-- Task Form -->
+<script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'due_date': task.due_date or '', 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links() } | tojson }}</script>
 <div x-data="{
-    title: {{ task.title | tojson }},
-    description: {{ (task.description or '') | tojson }},
-    status: '{{ task.status }}',
-    priority: '{{ task.priority or '' }}',
-    due_date: '{{ task.due_date or '' }}',
-    assignee: {{ (task.assignee or '') | tojson }},
-    project_id: {{ task.project_id | tojson }},
-    tags: {{ task.get_tags() | tojson }},
-    links: {{ task.get_links() | tojson }},
+    title: '',
+    description: '',
+    status: '',
+    priority: '',
+    due_date: '',
+    assignee: '',
+    project_id: null,
+    tags: [],
+    links: [],
     newTag: '',
     saving: false,
+    init() {
+        const data = JSON.parse(document.getElementById('task-data').textContent);
+        Object.assign(this, data);
+    },
     save() {
         if (this.saving) return;
         this.saving = true;
