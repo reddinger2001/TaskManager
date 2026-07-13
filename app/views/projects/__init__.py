@@ -64,36 +64,8 @@ def detail(project_id):
         Task.project_id.in_(descendant_ids),
     ).order_by(Task.created_at.desc()).all()
 
-    # Semantic search — find related inbox items
+    # Semantic search — disabled (embedding model causes crashes)
     related_captures = []
-    try:
-        from app.services.embedding import search_similar
-
-        # Build query text from project name + task titles/descriptions
-        parts = [project.name]
-        for t in tasks:
-            parts.append(t.title)
-            if t.description:
-                parts.append(t.description)
-        query_text = " ".join(parts)
-
-        exclude_ids = [t.id for t in tasks]  # Don't show project's own tasks
-        similar = search_similar(query_text, limit=10, exclude_ids=exclude_ids)
-
-        if similar:
-            # Filter out low-similarity results (distance > 1.2 is likely irrelevant)
-            similar = [(tid, dist) for tid, dist in similar if dist < 1.2]
-            if similar:
-                task_ids = [tid for tid, _ in similar]
-                related_captures = Task.query.filter(
-                    Task.id.in_(task_ids),
-                    Task.project_id.is_(None),  # inbox items only
-                ).all()
-                # Preserve similarity order
-                id_order = {tid: i for i, tid in enumerate(task_ids)}
-                related_captures.sort(key=lambda t: id_order.get(t.id, 999))
-    except Exception:
-        pass  # Graceful fallback — no related captures shown
 
     all_projects = Project.query.order_by(Project.name.asc()).all()
     return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects)

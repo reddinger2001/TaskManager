@@ -236,30 +236,8 @@ def detail(task_id):
     projects = Project.query.order_by(Project.name).all()
     assignees = sorted(set(t.assignee for t in Task.query.filter(Task.assignee.isnot(None)).all() if t.assignee))
 
-    # Semantic search — find related inbox items
+    # Semantic search — disabled (embedding model causes crashes)
     related_captures = []
-    try:
-        from app.services.embedding import search_similar
-
-        query_text = task.title
-        if task.description:
-            query_text += " " + task.description
-
-        similar = search_similar(query_text, limit=5, exclude_ids=[task.id])
-
-        if similar:
-            # Filter out low-similarity results
-            similar = [(tid, dist) for tid, dist in similar if dist < 1.2]
-            if similar:
-                task_ids = [tid for tid, _ in similar]
-                related_captures = Task.query.filter(
-                    Task.id.in_(task_ids),
-                    Task.project_id.is_(None),  # inbox items only
-                ).all()
-                id_order = {tid: i for i, tid in enumerate(task_ids)}
-                related_captures.sort(key=lambda t: id_order.get(t.id, 999))
-    except Exception:
-        pass  # Graceful fallback
 
     return render_template(
         "tasks/detail.html",
