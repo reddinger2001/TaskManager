@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "■ TASKMANAGER" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Board" [ref=e9] [cursor=pointer]:
+            - /url: /board
+          - link "Projects" [ref=e10] [cursor=pointer]:
+            - /url: /projects
+          - link "Calendar" [ref=e11] [cursor=pointer]:
+            - /url: /calendar
+          - link "Gantt" [ref=e12] [cursor=pointer]:
+            - /url: /gantt
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Search..." [ref=e15]
+          - img [ref=e16]
+        - button "+ New" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - link "← SOC Modernization" [ref=e23] [cursor=pointer]:
+            - /url: /projects/1
+          - heading "Tabletop exercise — ransomware scenario" [level=2] [ref=e24]
+        - button "Delete" [ref=e25] [cursor=pointer]
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: Title
+          - textbox [ref=e30]: Tabletop exercise — ransomware scenario
+        - generic [ref=e31]:
+          - generic [ref=e32]: Description
+          - textbox [ref=e33]: Plan and execute a tabletop exercise simulating a ransomware attack
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Status
+            - combobox [ref=e37]:
+              - option "backlog"
+              - option "active" [selected]
+              - option "blocked"
+              - option "delegated"
+              - option "done"
+          - generic [ref=e38]:
+            - generic [ref=e39]: Priority
+            - combobox [ref=e40]:
+              - option "—"
+              - option "P0"
+              - option "P1" [selected]
+              - option "P2"
+          - generic [ref=e41]:
+            - generic [ref=e42]: Due Date
+            - textbox [ref=e43]: 2026-08-15
+          - generic [ref=e44]:
+            - generic [ref=e45]: Assignee
+            - textbox [ref=e46]
+        - generic [ref=e47]:
+          - generic [ref=e48]: Project
+          - combobox [ref=e49]:
+            - option "— Inbox —"
+            - option "Q3 Audit Prep"
+            - option "SOC Modernization" [selected]
+            - option "SOC Tooling"
+            - option "Vendor Assessments"
+        - generic [ref=e50]:
+          - generic [ref=e51]: Tags
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: exercise
+              - button "×" [ref=e55] [cursor=pointer]
+            - generic [ref=e56]:
+              - generic [ref=e57]: planning
+              - button "×" [ref=e58] [cursor=pointer]
+            - textbox "Add tag..." [ref=e59]
+        - generic [ref=e60]:
+          - generic [ref=e61]: Links
+          - generic [ref=e62]:
+            - text: No links
+            - generic [ref=e63]:
+              - textbox "https://..." [ref=e64]
+              - textbox "Label" [ref=e65]
+              - button "+" [ref=e66] [cursor=pointer]
+        - button "Save" [ref=e68] [cursor=pointer]
+      - generic [ref=e69]:
+        - generic [ref=e70]: Created 2026-07-12 23:16
+        - generic [ref=e71]: Updated 2026-07-13 14:23
+      - generic [ref=e72]:
+        - heading "Logs" [level=3] [ref=e73]
+        - paragraph [ref=e74]: No logs for this task.
+        - button "+ Log" [ref=e75] [cursor=pointer]

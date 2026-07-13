@@ -1,0 +1,241 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "■ TASKMANAGER" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Board" [ref=e9] [cursor=pointer]:
+            - /url: /board
+          - link "Projects" [ref=e10] [cursor=pointer]:
+            - /url: /projects
+          - link "Calendar" [ref=e11] [cursor=pointer]:
+            - /url: /calendar
+          - link "Gantt" [ref=e12] [cursor=pointer]:
+            - /url: /gantt
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Search..." [ref=e15]
+          - img [ref=e16]
+        - button "+ New" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "BOARD" [level=2] [ref=e22]
+        - generic [ref=e23]:
+          - combobox [ref=e24]:
+            - option "All Projects" [selected]
+            - option "Q3 Audit Prep"
+            - option "SOC Modernization"
+            - option "SOC Tooling"
+            - option "Vendor Assessments"
+          - combobox [ref=e25]:
+            - option "All Assignees" [selected]
+            - option "Alex"
+            - option "Jamie"
+            - option "Mike"
+            - option "Sarah"
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - heading "Backlog" [level=2] [ref=e31]
+            - generic [ref=e32]: "2"
+          - generic [ref=e33]:
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - generic [ref=e37]: P2
+                - heading "Review firewall rules for DMZ segment" [level=3] [ref=e38]
+              - link [ref=e39] [cursor=pointer]:
+                - /url: /tasks/6
+                - img [ref=e40]
+            - generic [ref=e42]:
+              - generic [ref=e43]:
+                - generic [ref=e44]:
+                  - generic [ref=e45]: P2
+                  - heading "Update incident response contact list" [level=3] [ref=e46]
+                - link [ref=e47] [cursor=pointer]:
+                  - /url: /tasks/4
+                  - img [ref=e48]
+              - generic [ref=e52]: SOC Modernization
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - heading "Active" [level=2] [ref=e57]
+            - generic [ref=e58]: "6"
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]:
+                - generic [ref=e62]:
+                  - generic [ref=e63]: P1
+                  - heading "SOC tooling — EDR agent deployment" [level=3] [ref=e64]
+                - link [ref=e65] [cursor=pointer]:
+                  - /url: /tasks/16
+                  - img [ref=e66]
+              - paragraph [ref=e68]: Deploy CrowdStrike agents to all workstations
+              - generic [ref=e69]:
+                - generic [ref=e71]: SOC Tooling
+                - generic [ref=e72]: Jul 21
+            - generic [ref=e73]:
+              - generic [ref=e74]:
+                - generic [ref=e75]:
+                  - generic [ref=e76]: P1
+                  - heading "Phishing simulation vendor evaluation" [level=3] [ref=e77]
+                - link [ref=e78] [cursor=pointer]:
+                  - /url: /tasks/8
+                  - img [ref=e79]
+              - paragraph [ref=e81]: Evaluate vendors for Q3 phishing simulation program
+              - generic [ref=e82]:
+                - generic [ref=e84]: Vendor Assessments
+                - generic [ref=e85]: Jul 24
+              - generic [ref=e87]: "#vendor"
+            - generic [ref=e88]:
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - generic [ref=e91]: P2
+                  - heading "Security training Q3 planning" [level=3] [ref=e92]
+                - link [ref=e93] [cursor=pointer]:
+                  - /url: /tasks/7
+                  - img [ref=e94]
+              - generic [ref=e97]: Jul 31
+            - generic [ref=e98]:
+              - generic [ref=e99]:
+                - generic [ref=e100]:
+                  - generic [ref=e101]: P1
+                  - heading "Tabletop exercise — ransomware scenario" [level=3] [ref=e102]
+                - link [ref=e103] [cursor=pointer]:
+                  - /url: /tasks/3
+                  - img [ref=e104]
+              - paragraph [ref=e106]: Plan and execute a tabletop exercise simulating a ransomware attack
+              - generic [ref=e107]:
+                - generic [ref=e109]: SOC Modernization
+                - generic [ref=e110]: Aug 14
+              - generic [ref=e111]:
+                - generic [ref=e112]: "#exercise"
+                - generic [ref=e113]: "#planning"
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - generic [ref=e117]: P1
+                  - heading "SOC runbook update — phishing response" [level=3] [ref=e118]
+                - link [ref=e119] [cursor=pointer]:
+                  - /url: /tasks/2
+                  - img [ref=e120]
+              - paragraph [ref=e122]: Update the phishing incident response runbook with new procedures for BEC attacks
+              - generic [ref=e123]:
+                - generic [ref=e125]: SOC Modernization
+                - generic [ref=e126]: Jul 17
+              - generic [ref=e128]: "#runbook"
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - generic [ref=e132]: P0
+                  - heading "Implement SOC monitoring dashboards" [level=3] [ref=e133]
+                - link [ref=e134] [cursor=pointer]:
+                  - /url: /tasks/1
+                  - img [ref=e135]
+              - paragraph [ref=e137]: Set up SIEM dashboards for real-time threat visibility
+              - generic [ref=e138]:
+                - generic [ref=e140]: SOC Modernization
+                - generic [ref=e141]: Jul 19
+              - generic [ref=e142]:
+                - generic [ref=e143]: "#siem"
+                - generic [ref=e144]: "#monitoring"
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - heading "Delegated" [level=2] [ref=e149]
+            - generic [ref=e150]: "4"
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]:
+                  - generic [ref=e155]: P1
+                  - heading "Incident response documentation update" [level=3] [ref=e156]
+                - link [ref=e157] [cursor=pointer]:
+                  - /url: /tasks/10
+                  - img [ref=e158]
+              - generic [ref=e161]:
+                - generic [ref=e162]: S
+                - generic [ref=e163]: SOC Modernization
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: P2
+                  - heading "MFA rollout plan for Q4" [level=3] [ref=e168]
+                - link [ref=e169] [cursor=pointer]:
+                  - /url: /tasks/11
+                  - img [ref=e170]
+              - generic [ref=e173]:
+                - generic [ref=e174]: J
+                - generic [ref=e175]: SOC Modernization
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - generic [ref=e179]: P1
+                  - heading "Policy review — Acceptable Use Policy" [level=3] [ref=e180]
+                - link [ref=e181] [cursor=pointer]:
+                  - /url: /tasks/9
+                  - img [ref=e182]
+              - generic [ref=e185]:
+                - generic [ref=e186]: M
+                - generic [ref=e187]: SOC Modernization
+            - generic [ref=e188]:
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - generic [ref=e191]: P1
+                  - heading "NIST CSF mapping for new regulation" [level=3] [ref=e192]
+                - link [ref=e193] [cursor=pointer]:
+                  - /url: /tasks/5
+                  - img [ref=e194]
+              - paragraph [ref=e196]: Map current controls to NIST Cybersecurity Framework v2.0
+              - generic [ref=e197]:
+                - generic [ref=e199]: Q3 Audit Prep
+                - generic [ref=e200]: Jul 31
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - heading "Blocked" [level=2] [ref=e205]
+            - generic [ref=e206]: "2"
+          - generic [ref=e207]:
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - heading "Vendor assessment — Acme Corp" [level=3] [ref=e211]
+                - link [ref=e212] [cursor=pointer]:
+                  - /url: /tasks/12
+                  - img [ref=e213]
+              - paragraph [ref=e215]: Waiting on vendor to provide SOC 2 report
+              - generic [ref=e217]:
+                - generic [ref=e218]: A
+                - generic [ref=e219]: Vendor Assessments
+              - generic [ref=e221]: "#vendor"
+            - generic [ref=e222]:
+              - generic [ref=e223]:
+                - heading "Access control review — Finance dept" [level=3] [ref=e225]
+                - link [ref=e226] [cursor=pointer]:
+                  - /url: /tasks/13
+                  - img [ref=e227]
+              - paragraph [ref=e229]: Blocked — waiting on HR for employee list
+              - generic [ref=e232]: S
+        - generic [ref=e233]:
+          - generic [ref=e234]:
+            - heading "Done" [level=2] [ref=e237]
+            - generic [ref=e238]: "2"
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - generic [ref=e241]:
+                - generic [ref=e242]:
+                  - generic [ref=e243]: P0
+                  - heading "Patch critical vulnerabilities on web servers" [level=3] [ref=e244]
+                - link [ref=e245] [cursor=pointer]:
+                  - /url: /tasks/15
+                  - img [ref=e246]
+              - generic [ref=e250]: SOC Modernization
+            - generic [ref=e251]:
+              - generic [ref=e252]:
+                - generic [ref=e253]:
+                  - generic [ref=e254]: P1
+                  - heading "Complete Q2 security awareness training" [level=3] [ref=e255]
+                - link [ref=e256] [cursor=pointer]:
+                  - /url: /tasks/14
+                  - img [ref=e257]
+              - generic [ref=e260]:
+                - generic [ref=e261]: M
+                - generic [ref=e262]: SOC Modernization

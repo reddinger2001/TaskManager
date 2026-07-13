@@ -1,0 +1,129 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "■ TASKMANAGER" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Board" [ref=e9] [cursor=pointer]:
+            - /url: /board
+          - link "Projects" [ref=e10] [cursor=pointer]:
+            - /url: /projects
+          - link "Calendar" [ref=e11] [cursor=pointer]:
+            - /url: /calendar
+          - link "Gantt" [ref=e12] [cursor=pointer]:
+            - /url: /gantt
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Search..." [ref=e15]
+          - img [ref=e16]
+        - button "+ New" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "GANTT" [level=2] [ref=e22]
+        - generic [ref=e23]:
+          - combobox [ref=e24]:
+            - option "All Projects" [selected]
+            - option "Q3 Audit Prep"
+            - option "SOC Modernization"
+            - option "SOC Tooling"
+            - option "Vendor Assessments"
+          - button "Export PDF" [ref=e25] [cursor=pointer]
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Task
+          - generic [ref=e31]:
+            - generic [ref=e33]: Jul 12
+            - generic [ref=e35]: Jul 13
+            - generic [ref=e37]: Jul 14
+            - generic [ref=e39]: Jul 15
+            - generic [ref=e41]: Jul 16
+            - generic [ref=e43]: Jul 17
+            - generic [ref=e45]: Jul 18
+            - generic [ref=e47]: Jul 19
+            - generic [ref=e49]: Jul 20
+            - generic [ref=e51]: Jul 21
+            - generic [ref=e53]: Jul 22
+            - generic [ref=e55]: Jul 23
+            - generic [ref=e57]: Jul 24
+            - generic [ref=e59]: Jul 25
+            - generic [ref=e61]: Jul 26
+            - generic [ref=e63]: Jul 27
+            - generic [ref=e65]: Jul 28
+            - generic [ref=e67]: Jul 29
+            - generic [ref=e69]: Jul 30
+            - generic [ref=e71]: Jul 31
+            - generic [ref=e73]: Aug 1
+            - generic [ref=e75]: Aug 2
+            - generic [ref=e77]: Aug 3
+            - generic [ref=e79]: Aug 4
+            - generic [ref=e81]: Aug 5
+            - generic [ref=e83]: Aug 6
+            - generic [ref=e85]: Aug 7
+            - generic [ref=e87]: Aug 8
+            - generic [ref=e89]: Aug 9
+            - generic [ref=e91]: Aug 10
+            - generic [ref=e93]: Aug 11
+            - generic [ref=e95]: Aug 12
+            - generic [ref=e97]: Aug 13
+            - generic [ref=e99]: Aug 14
+            - generic [ref=e101]: Aug 15
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - link "SOC runbook update — phishing response" [ref=e104] [cursor=pointer]:
+              - /url: /tasks/2
+              - generic [ref=e106]: SOC runbook update — phishing response
+            - img [ref=e108]:
+              - generic: 2026-07-18 → 2026-07-18
+              - generic: ↻
+          - generic [ref=e109]:
+            - link "Implement SOC monitoring dashboards" [ref=e110] [cursor=pointer]:
+              - /url: /tasks/1
+              - generic [ref=e112]: Implement SOC monitoring dashboards
+            - img [ref=e114]:
+              - generic: 2026-07-13 → 2026-07-20
+              - generic: ↻
+          - generic [ref=e115]:
+            - link "SOC tooling — EDR agent deployment" [ref=e116] [cursor=pointer]:
+              - /url: /tasks/16
+              - generic [ref=e118]: SOC tooling — EDR agent deployment
+            - img [ref=e120]:
+              - generic: 2026-07-22 → 2026-07-22
+              - generic: ↻
+          - generic [ref=e121]:
+            - link "Phishing simulation vendor evaluation" [ref=e122] [cursor=pointer]:
+              - /url: /tasks/8
+              - generic [ref=e124]: Phishing simulation vendor evaluation
+            - img [ref=e126]:
+              - generic: 2026-07-25 → 2026-07-25
+              - generic: ↻
+          - generic [ref=e127]:
+            - link "NIST CSF mapping for new regulation" [ref=e128] [cursor=pointer]:
+              - /url: /tasks/5
+              - generic [ref=e130]: NIST CSF mapping for new regulation
+            - img [ref=e132]:
+              - generic: 2026-08-01 → 2026-08-01
+              - generic: ↻
+          - generic [ref=e133]:
+            - link "Security training Q3 planning" [ref=e134] [cursor=pointer]:
+              - /url: /tasks/7
+              - generic [ref=e136]: Security training Q3 planning
+            - img [ref=e138]:
+              - generic: 2026-08-01 → 2026-08-01
+              - generic: ↻
+          - generic [ref=e139]:
+            - link "Tabletop exercise — ransomware scenario" [ref=e140] [cursor=pointer]:
+              - /url: /tasks/3
+              - generic [ref=e142]: Tabletop exercise — ransomware scenario
+            - img [ref=e144]:
+              - generic: 2026-08-15 → 2026-08-15
+              - generic: ↻
+      - generic [ref=e145]:
+        - generic [ref=e146]: "Status:"
+        - generic [ref=e149]: backlog
+        - generic [ref=e152]: active
+        - generic [ref=e155]: delegated
+        - generic [ref=e158]: blocked
+        - generic [ref=e161]: done

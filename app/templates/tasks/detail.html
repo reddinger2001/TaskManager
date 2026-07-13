@@ -46,7 +46,7 @@
 </div>
 
 <!-- Task Form -->
-<script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'due_date': task.due_date or '', 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links() } | tojson }}</script>
+<script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'start_date': task.start_date or '', 'due_date': task.due_date or '', 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links(), 'recurrence': task.recurrence or '', 'recurrence_end': task.recurrence_end or '' } | tojson }}</script>
 <div x-data="taskForm()">
 
 <div class="bg-panel border border-border rounded-lg p-5 mb-6 space-y-4">
@@ -67,7 +67,7 @@
                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40"></textarea>
     </div>
 
-    <!-- Row: Status, Priority, Due Date -->
+    <!-- Row: Status, Priority, Assignee -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
             <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Status</label>
@@ -91,12 +91,6 @@
             </select>
         </div>
         <div>
-            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
-            <input x-model="due_date" type="date"
-                   @change="save()"
-                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
-        </div>
-        <div>
             <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
             <input x-model="assignee" type="text" list="assignee-options"
                    @keydown.enter.prevent="save()"
@@ -108,6 +102,38 @@
                 <option value="{{ a }}"></option>
                 {% endfor %}
             </datalist>
+        </div>
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Recurrence</label>
+            <select x-model="recurrence"
+                    @change="save()"
+                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                {% for r in recurrences %}
+                <option value="{{ r }}" {% if task.recurrence == r %}selected{% endif %}>{% if r == '' %}— None —{% elif r == 'daily' %}Daily{% elif r == 'weekly' %}Weekly{% elif r == 'monthly' %}Monthly{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Row: Start Date, Due Date, Recurrence End -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Start Date</label>
+            <input x-model="start_date" type="date"
+                   @change="save()"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+        </div>
+        <div>
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
+            <input x-model="due_date" type="date"
+                   @change="save()"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+        </div>
+        <div x-show="recurrence">
+            <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Recurrence Ends</label>
+            <input x-model="recurrence_end" type="date"
+                   @change="save()"
+                   class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
         </div>
     </div>
 
@@ -285,11 +311,14 @@ function taskForm() {
         description: data.description,
         status: data.status,
         priority: data.priority,
+        start_date: data.start_date,
         due_date: data.due_date,
         assignee: data.assignee,
         project_id: data.project_id,
         tags: data.tags,
         links: data.links,
+        recurrence: data.recurrence,
+        recurrence_end: data.recurrence_end,
         newTag: '',
         saving: false,
 
@@ -299,7 +328,7 @@ function taskForm() {
             fetch('/tasks/{{ task.id }}', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links })
+                body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, start_date: this.start_date, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links, recurrence: this.recurrence, recurrence_end: this.recurrence_end })
             }).then(r => r.json()).then(() => location.reload());
         },
 

@@ -1,0 +1,56 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "■ TASKMANAGER" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Board" [ref=e9] [cursor=pointer]:
+            - /url: /board
+          - link "Projects" [ref=e10] [cursor=pointer]:
+            - /url: /projects
+          - link "Calendar" [ref=e11] [cursor=pointer]:
+            - /url: /calendar
+          - link "Gantt" [ref=e12] [cursor=pointer]:
+            - /url: /gantt
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Search..." [ref=e15]
+          - img [ref=e16]
+        - button "+ New" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "PROJECTS" [level=2] [ref=e22]
+        - button "+ New Project" [ref=e23] [cursor=pointer]
+      - generic [ref=e24]:
+        - link "↳ SOC Modernization SOC Tooling SIEM and EDR tooling upgrades 1 task 0%" [ref=e25] [cursor=pointer]:
+          - /url: /projects/4
+          - text: ↳ SOC Modernization
+          - heading "SOC Tooling" [level=3] [ref=e27]
+          - paragraph [ref=e28]: SIEM and EDR tooling upgrades
+          - generic [ref=e29]:
+            - generic [ref=e30]: 1 task
+            - generic [ref=e33]: 0%
+        - link "Vendor Assessments Evaluate third-party vendors 2 tasks 0%" [ref=e34] [cursor=pointer]:
+          - /url: /projects/3
+          - heading "Vendor Assessments" [level=3] [ref=e36]
+          - paragraph [ref=e37]: Evaluate third-party vendors
+          - generic [ref=e38]:
+            - generic [ref=e39]: 2 tasks
+            - generic [ref=e42]: 0%
+        - link "Q3 Audit Prep Prepare for Q3 compliance audit 1 task 0%" [ref=e43] [cursor=pointer]:
+          - /url: /projects/2
+          - heading "Q3 Audit Prep" [level=3] [ref=e45]
+          - paragraph [ref=e46]: Prepare for Q3 compliance audit
+          - generic [ref=e47]:
+            - generic [ref=e48]: 1 task
+            - generic [ref=e51]: 0%
+        - link "SOC Modernization Modernize security operations center 9 tasks 22%" [ref=e52] [cursor=pointer]:
+          - /url: /projects/1
+          - heading "SOC Modernization" [level=3] [ref=e54]
+          - paragraph [ref=e55]: Modernize security operations center
+          - generic [ref=e56]:
+            - generic [ref=e57]: 9 tasks
+            - generic [ref=e61]: 22%

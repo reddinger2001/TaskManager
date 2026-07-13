@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Gantt — TaskManager{% endblock %}
 
+{% block extra_head %}
+<style>
+@media print {
+    .no-print, nav, .fixed, [x-cloak] { display: none !important; }
+    body { background: white !important; color: #1a2332 !important; }
+    .bg-panel { background: white !important; border-color: #ddd !important; }
+    .text-text { color: #1a2332 !important; }
+    .text-muted { color: #666 !important; }
+    .border-border { border-color: #ddd !important; }
+    h2 { color: #0a0e17 !important; }
+    .fc-event { border: 1px solid #333 !important; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div x-data="gantt()">
 
@@ -9,12 +24,16 @@
     <h2 class="text-lg font-bold mono tracking-wider text-text">GANTT</h2>
     <div class="flex items-center gap-2">
         <select x-model="filterProject" @change="applyFilters()"
-                class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 no-print">
             <option value="">All Projects</option>
             {% for p in projects %}
             <option value="{{ p.id }}"{% if project_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
             {% endfor %}
         </select>
+        <button @click="$window.print()"
+                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
+            Export PDF
+        </button>
     </div>
 </div>
 
@@ -62,7 +81,7 @@
                         <!-- Today line -->
                         <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
                         <!-- Task bar -->
-                        <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="Math.max(dayWidth, 16)" height="20" rx="4"
+                        <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="taskBarWidth(task)" height="20" rx="4"
                               x-bind:fill="statusColor(task.status) + '30'"
                               x-bind:stroke="statusColor(task.status)"
                               stroke-width="1.5"
@@ -70,9 +89,15 @@
                               @click="$event.preventDefault(); window.location.href = '/tasks/' + task.id">
                         </rect>
                         <!-- Task label on bar -->
-                        <text x-bind:x="taskBarX(task) + Math.max(dayWidth, 16) / 2" y="22" text-anchor="middle"
+                        <text x-bind:x="taskBarX(task) + taskBarWidth(task) / 2" y="22" text-anchor="middle"
                               class="fill-text text-[9px] mono pointer-events-none"
-                              x-text="task.due_date"></text>
+                              x-text="task.start_date + ' → ' + task.due_date"></text>
+                        <!-- Recurrence indicator -->
+                        <text x-bind:x="taskBarX(task) + taskBarWidth(task) - 2" y="14" text-anchor="end"
+                              class="fill-accent text-[10px] pointer-events-none"
+                              :opacity="task.recurrence ? 1 : 0">
+                            ↻
+                        </text>
                     </svg>
                 </div>
             </div>
@@ -165,6 +190,13 @@ function gantt() {
             const start = new Date(this.startDate);
             const diffDays = Math.round((due - start) / (1000 * 60 * 60 * 24));
             return diffDays * this.dayWidth + 2;
+        },
+
+        taskBarWidth(task) {
+            const start = new Date(task.start_date || task.due_date);
+            const end = new Date(task.due_date);
+            let days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            return Math.max(days * this.dayWidth - 4, 16);
         },
 
         statusColor(status) {

@@ -16,6 +16,8 @@ class Project(db.Model):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)
     parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
+    end_date: Mapped[str | None] = mapped_column(String(10), nullable=True)    # YYYY-MM-DD
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
@@ -52,8 +54,12 @@ class Task(db.Model):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="backlog")
     priority: Mapped[str | None] = mapped_column(String(5), nullable=True)
-    due_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
+    due_date: Mapped[str | None] = mapped_column(String(10), nullable=True)     # YYYY-MM-DD
     assignee: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    recurrence: Mapped[str | None] = mapped_column(String(10), nullable=True)   # daily, weekly, monthly
+    recurrence_end: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
+    completed_dates: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON array of YYYY-MM-DD
     project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
 
     # JSON fields stored as text
@@ -90,6 +96,17 @@ class Task(db.Model):
 
     def set_links(self, value):
         self.links = json.dumps(value) if value else None
+
+    def get_completed_dates(self):
+        if not self.completed_dates:
+            return []
+        try:
+            return json.loads(self.completed_dates)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def set_completed_dates(self, value):
+        self.completed_dates = json.dumps(value) if value else None
 
     def __repr__(self):
         return f"<Task {self.title}>"

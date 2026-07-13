@@ -10,6 +10,7 @@ tasks_bp = Blueprint("tasks", __name__)
 
 STATUSES = ["backlog", "active", "blocked", "delegated", "done"]
 PRIORITIES = ["P0", "P1", "P2"]
+RECURRENCES = ["", "daily", "weekly", "monthly"]
 
 # Columns that can be sorted server-side
 SORT_FIELDS = {
@@ -210,9 +211,12 @@ def create():
         description=request.form.get("description", "").strip() or None,
         status=request.form.get("status", "backlog") or "backlog",
         priority=request.form.get("priority") or None,
+        start_date=request.form.get("start_date") or None,
         due_date=request.form.get("due_date") or None,
         assignee=request.form.get("assignee", "").strip() or None,
         project_id=int(request.form["project_id"]) if request.form.get("project_id") else None,
+        recurrence=request.form.get("recurrence") or None,
+        recurrence_end=request.form.get("recurrence_end") or None,
     )
 
     # Handle tags from comma-separated input
@@ -264,6 +268,7 @@ def detail(task_id):
         assignees=assignees,
         statuses=STATUSES,
         priorities=PRIORITIES,
+        recurrences=RECURRENCES,
         related_captures=related_captures,
     )
 
@@ -284,8 +289,14 @@ def update(task_id):
         task.status = new_status
     if "priority" in data:
         task.priority = data["priority"] or None
+    if "start_date" in data:
+        task.start_date = data["start_date"] or None
     if "due_date" in data:
         task.due_date = data["due_date"] or None
+    if "recurrence" in data:
+        task.recurrence = data["recurrence"] or None
+    if "recurrence_end" in data:
+        task.recurrence_end = data["recurrence_end"] or None
     if "assignee" in data:
         task.assignee = data["assignee"].strip() or None
     if "project_id" in data:

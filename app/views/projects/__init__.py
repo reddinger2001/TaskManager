@@ -45,6 +45,8 @@ def create():
         name=name,
         description=request.form.get("description", "").strip() or None,
         color=_auto_color(),
+        start_date=request.form.get("start_date") or None,
+        end_date=request.form.get("end_date") or None,
         parent_id=parent_id,
     )
     db.session.add(project)
@@ -108,6 +110,10 @@ def update(project_id):
         project.description = data["description"].strip() or None
     if "color" in data:
         project.color = data["color"] or None
+    if "start_date" in data:
+        project.start_date = data["start_date"] or None
+    if "end_date" in data:
+        project.end_date = data["end_date"] or None
     if "parent_id" in data:
         new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
         # Prevent circular references: can't set parent to self or a descendant

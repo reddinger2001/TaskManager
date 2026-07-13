@@ -230,8 +230,10 @@ def gantt():
             "id": t.id,
             "title": t.title,
             "status": t.status,
+            "start_date": t.start_date or t.due_date,
             "due_date": t.due_date,
             "project_id": t.project_id,
+            "recurrence": t.recurrence or None,
         })
 
     return render_template(
@@ -246,20 +248,66 @@ def gantt():
 def calendar_events():
     tasks = Task.query.filter(Task.due_date.isnot(None)).all()
     events = []
+    color_map = {
+        "backlog": "#6b7280",
+        "active": "#00e5ff",
+        "delegated": "#7c4dff",
+        "blocked": "#ff5252",
+        "done": "#69f0ae",
+    }
     for t in tasks:
-        color_map = {
-            "backlog": "#6b7280",
-            "active": "#00e5ff",
-            "delegated": "#7c4dff",
-            "blocked": "#ff5252",
-            "done": "#69f0ae",
-        }
-        events.append({
-            "id": str(t.id),
-            "title": t.title,
-            "start": t.due_date,
-            "url": f"/tasks/{t.id}",
-            "backgroundColor": color_map.get(t.status, "#6b7280"),
-            "borderColor": color_map.get(t.status, "#6b7280"),
-        })
+        # For recurring tasks, generate occurrences within the requested range
+        if t.recurrence and t.due_date:
+            events.extend(_generate_recurring_events(t, color_map))
+        else:
+            end = t.due_date
+            if t.start_date and t.start_date != t.due_date:
+                end = None  # FullCalendar uses end as exclusive
+            events.append({
+                "id": str(t.id),
+                "title": t.title,
+                "start": t.start_date or t.due_date,
+                "end": end,
+                "url": f"/tasks/{t.id}",
+                "backgroundColor": color_map.get(t.status, "#6b7280"),
+                "borderColor": color_map.get(t.status, "#6b7280"),
+            })
     return jsonify(events)
+
+
+def _generate_recurring_events(task, color_map):
+    """Generate calendar events for a recurring task within the current month."""
+    from datetime import timedelta
+    events = []
+    completed = set(task.get_completed_dates())
+
+    # Start from due_date (first occurrence)
+    start = datetime.strptime(task.due_date, "%Y-%m-%d")
+    end_limit = datetime.strptime(task.recurrence_end, "%Y-%m-%d") if task.recurrence_end else (start + timedelta(days=365))
+
+    current = start
+    while current <= end_limit:
+        date_str = current.strftime("%Y-%m-%d")
+        if date_str not in completed:
+            events.append({
+                "id": f"{task.id}:{date_str}",
+                "title": task.title,
+                "start": date_str,
+                "url": f"/tasks/{task.id}",
+                "backgroundColor": color_map.get(task.status, "#6b7280"),
+                "borderColor": color_map.get(task.status, "#6b7280"),
+            })
+
+        # Advance by recurrence
+        if task.recurrence == "daily":
+            current += timedelta(days=1)
+        elif task.recurrence == "weekly":
+            current += timedelta(weeks=1)
+        elif task.recurrence == "monthly":
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
+        else:
+            break
+    return events
