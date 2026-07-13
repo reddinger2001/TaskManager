@@ -260,14 +260,11 @@ def calendar_events():
         if t.recurrence and t.due_date:
             events.extend(_generate_recurring_events(t, color_map))
         else:
-            end = t.due_date
-            if t.start_date and t.start_date != t.due_date:
-                end = None  # FullCalendar uses end as exclusive
+            # Calendar shows due_date only — multi-day spans belong on Gantt
             events.append({
                 "id": str(t.id),
                 "title": t.title,
-                "start": t.start_date or t.due_date,
-                "end": end,
+                "start": t.due_date,
                 "url": f"/tasks/{t.id}",
                 "backgroundColor": color_map.get(t.status, "#6b7280"),
                 "borderColor": color_map.get(t.status, "#6b7280"),

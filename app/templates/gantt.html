@@ -47,7 +47,7 @@
             <!-- Timeline Header Row -->
             <div class="flex border-b border-border">
                 <!-- Task labels column header -->
-                <div class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel">
+                <div class="w-[280px] flex-shrink-0 sticky left-0 z-20 px-4 py-2.5 border-r border-border bg-panel">
                     <span class="text-xs mono uppercase tracking-widest text-muted">Task</span>
                 </div>
                 <!-- Date headers -->
@@ -71,7 +71,7 @@
                     <div class="flex border-b border-border/30 hover:bg-surface/50 transition-colors group">
                         <!-- Task label (sticky left) -->
                         <a :href="'/tasks/' + task.id"
-                           class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel flex items-center gap-2 no-underline">
+                           class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel flex items-center gap-2 no-underline group-hover:bg-surface/80">
                             <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background: ' + statusColor(task.status)"></span>
                             <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
                         </a>
@@ -147,7 +147,8 @@ function gantt() {
 
         get startDate() {
             if (this.tasks.length === 0) return new Date();
-            const min = new Date(this.tasks.reduce((min, t) => t.due_date < min ? t.due_date : min, this.tasks[0].due_date));
+            const allDates = this.tasks.flatMap(t => [t.due_date, t.start_date || t.due_date].filter(Boolean));
+            const min = new Date(allDates.reduce((min, d) => d < min ? d : min, allDates[0]));
             // Start from beginning of week
             min.setDate(min.getDate() - min.getDay());
             return min;
