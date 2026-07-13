@@ -1,6 +1,7 @@
+import json
 import re
 
-from flask import Blueprint, current_app as app, request, render_template
+from flask import Blueprint, current_app as app, jsonify, request, render_template
 from markupsafe import Markup
 
 from app.models import Log, Project, Task, db
@@ -210,3 +211,31 @@ def board():
         project_id=project_id,
         assignee=assignee,
     )
+
+
+@main_bp.route("/calendar")
+def calendar():
+    return render_template("calendar.html")
+
+
+@main_bp.route("/api/calendar/events")
+def calendar_events():
+    tasks = Task.query.filter(Task.due_date.isnot(None)).all()
+    events = []
+    for t in tasks:
+        color_map = {
+            "backlog": "#6b7280",
+            "active": "#00e5ff",
+            "delegated": "#7c4dff",
+            "blocked": "#ff5252",
+            "done": "#69f0ae",
+        }
+        events.append({
+            "id": str(t.id),
+            "title": t.title,
+            "start": t.due_date,
+            "url": f"/tasks/{t.id}",
+            "backgroundColor": color_map.get(t.status, "#6b7280"),
+            "borderColor": color_map.get(t.status, "#6b7280"),
+        })
+    return jsonify(events)
