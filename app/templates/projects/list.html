@@ -60,10 +60,10 @@
         <!-- Color bar -->
         <div class="absolute top-0 left-0 w-full h-[3px] rounded-t-lg" style="background: {{ p.color or '#1a2332' }};"></div>
 
-        <!-- Parent indicator with link -->
+        <!-- Parent indicator -->
         {% if p.parent_id %}
         <span class="text-[10px] mono text-muted">
-            ↳ <a href="/projects/{{ p.parent_id }}" class="hover:text-accent transition-colors">{{ p.parent.name }}</a>
+            ↳ {{ p.parent.name }}
         </span>
         {% endif %}
 
