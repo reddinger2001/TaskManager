@@ -40,8 +40,8 @@
 <!-- Gantt Chart -->
 <div class="bg-panel border border-border rounded-xl overflow-hidden" x-show="tasks.length > 0">
 
-    <!-- Single scrollable container -->
-    <div class="overflow-x-auto" id="timeline-scroll">
+    <!-- Single scrollable container — both horizontal and vertical -->
+    <div class="overflow-auto max-h-[700px]" id="timeline-scroll">
         <div :style="'width: ' + (280 + timelineWidth) + 'px;'">
 
             <!-- Timeline Header Row -->
@@ -66,43 +66,41 @@
             </div>
 
             <!-- Task Rows -->
-            <div class="max-h-[600px] overflow-y-auto">
-                <template x-for="task in tasks" :key="task.id">
-                    <div class="flex border-b border-border/30 hover:bg-surface/50 transition-colors group">
-                        <!-- Task label (sticky left) -->
-                        <a :href="'/tasks/' + task.id"
-                           class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel flex items-center gap-2 no-underline group-hover:bg-surface/80">
-                            <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background: ' + statusColor(task.status)"></span>
-                            <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
-                        </a>
-                        <!-- Timeline bar -->
-                        <div class="flex-1 relative py-2">
-                            <svg :style="'width: ' + timelineWidth + 'px; height: 36px;'">
-                                <!-- Today line -->
-                                <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
-                                <!-- Task bar -->
-                                <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="taskBarWidth(task)" height="20" rx="4"
-                                      x-bind:fill="statusColor(task.status) + '30'"
-                                      x-bind:stroke="statusColor(task.status)"
-                                      stroke-width="1.5"
-                                      class="cursor-pointer transition-all"
-                                      @click="$event.preventDefault(); window.location.href = '/tasks/' + task.id">
-                                </rect>
-                                <!-- Task label on bar -->
-                                <text x-bind:x="taskBarX(task) + taskBarWidth(task) / 2" y="22" text-anchor="middle"
-                                      class="fill-text text-[9px] mono pointer-events-none"
-                                      x-text="task.start_date + ' → ' + task.due_date"></text>
-                                <!-- Recurrence indicator -->
-                                <text x-bind:x="taskBarX(task) + taskBarWidth(task) - 2" y="14" text-anchor="end"
-                                      class="fill-accent text-[10px] pointer-events-none"
-                                      :opacity="task.recurrence ? 1 : 0">
-                                    ↻
-                                </text>
-                            </svg>
-                        </div>
+            <template x-for="task in tasks" :key="task.id">
+                <div class="flex border-b border-border/30 hover:bg-surface/50 transition-colors group">
+                    <!-- Task label (sticky left) -->
+                    <a :href="'/tasks/' + task.id"
+                       class="w-[280px] flex-shrink-0 sticky left-0 z-10 px-4 py-2.5 border-r border-border bg-panel flex items-center gap-2 no-underline group-hover:bg-surface/80">
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" :style="'background: ' + statusColor(task.status)"></span>
+                        <span class="text-xs font-medium text-text truncate" x-text="task.title"></span>
+                    </a>
+                    <!-- Timeline bar -->
+                    <div class="flex-1 relative py-2">
+                        <svg :style="'width: ' + timelineWidth + 'px; height: 36px;'">
+                            <!-- Today line -->
+                            <line x-bind:x1="todayX" y1="0" x-bind:x2="todayX" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>
+                            <!-- Task bar -->
+                            <rect x-bind:x="taskBarX(task)" y="8" x-bind:width="taskBarWidth(task)" height="20" rx="4"
+                                  x-bind:fill="statusColor(task.status) + '30'"
+                                  x-bind:stroke="statusColor(task.status)"
+                                  stroke-width="1.5"
+                                  class="cursor-pointer transition-all"
+                                  @click="$event.preventDefault(); window.location.href = '/tasks/' + task.id">
+                            </rect>
+                            <!-- Task label on bar -->
+                            <text x-bind:x="taskBarX(task) + taskBarWidth(task) / 2" y="22" text-anchor="middle"
+                                  class="fill-text text-[9px] mono pointer-events-none"
+                                  x-text="task.start_date + ' → ' + task.due_date"></text>
+                            <!-- Recurrence indicator -->
+                            <text x-bind:x="taskBarX(task) + taskBarWidth(task) - 2" y="14" text-anchor="end"
+                                  class="fill-accent text-[10px] pointer-events-none"
+                                  :opacity="task.recurrence ? 1 : 0">
+                                ↻
+                            </text>
+                        </svg>
                     </div>
-                </template>
-            </div>
+                </div>
+            </template>
 
         </div>
     </div>

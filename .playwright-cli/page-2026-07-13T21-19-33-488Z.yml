@@ -1,0 +1,150 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "■ TASKMANAGER" [level=1] [ref=e6]
+        - navigation [ref=e7]:
+          - link "Dashboard" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Board" [ref=e9] [cursor=pointer]:
+            - /url: /board
+          - link "Projects" [ref=e10] [cursor=pointer]:
+            - /url: /projects
+          - link "Calendar" [ref=e11] [cursor=pointer]:
+            - /url: /calendar
+          - link "Gantt" [ref=e12] [cursor=pointer]:
+            - /url: /gantt
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Search..." [ref=e15]
+          - img [ref=e16]
+        - button "+ New" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "GANTT" [level=2] [ref=e22]
+        - generic [ref=e23]:
+          - combobox [ref=e24]:
+            - option "All Projects" [selected]
+            - option "Q3 Audit Prep"
+            - option "SOC Modernization"
+            - option "SOC Tooling"
+            - option "Vendor Assessments"
+          - button "Export PDF" [ref=e25] [cursor=pointer]
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: Task
+          - generic [ref=e31]:
+            - generic [ref=e33]: Jun 28
+            - generic [ref=e35]: Jun 29
+            - generic [ref=e37]: Jun 30
+            - generic [ref=e39]: Jul 1
+            - generic [ref=e41]: Jul 2
+            - generic [ref=e43]: Jul 3
+            - generic [ref=e45]: Jul 4
+            - generic [ref=e47]: Jul 5
+            - generic [ref=e49]: Jul 6
+            - generic [ref=e51]: Jul 7
+            - generic [ref=e53]: Jul 8
+            - generic [ref=e55]: Jul 9
+            - generic [ref=e57]: Jul 10
+            - generic [ref=e59]: Jul 11
+            - generic [ref=e61]: Jul 12
+            - generic [ref=e63]: Jul 13
+            - generic [ref=e65]: Jul 14
+            - generic [ref=e67]: Jul 15
+            - generic [ref=e69]: Jul 16
+            - generic [ref=e71]: Jul 17
+            - generic [ref=e73]: Jul 18
+            - generic [ref=e75]: Jul 19
+            - generic [ref=e77]: Jul 20
+            - generic [ref=e79]: Jul 21
+            - generic [ref=e81]: Jul 22
+            - generic [ref=e83]: Jul 23
+            - generic [ref=e85]: Jul 24
+            - generic [ref=e87]: Jul 25
+            - generic [ref=e89]: Jul 26
+            - generic [ref=e91]: Jul 27
+            - generic [ref=e93]: Jul 28
+            - generic [ref=e95]: Jul 29
+            - generic [ref=e97]: Jul 30
+            - generic [ref=e99]: Jul 31
+            - generic [ref=e101]: Aug 1
+            - generic [ref=e103]: Aug 2
+            - generic [ref=e105]: Aug 3
+            - generic [ref=e107]: Aug 4
+            - generic [ref=e109]: Aug 5
+            - generic [ref=e111]: Aug 6
+            - generic [ref=e113]: Aug 7
+            - generic [ref=e115]: Aug 8
+            - generic [ref=e117]: Aug 9
+            - generic [ref=e119]: Aug 10
+            - generic [ref=e121]: Aug 11
+            - generic [ref=e123]: Aug 12
+            - generic [ref=e125]: Aug 13
+            - generic [ref=e127]: Aug 14
+            - generic [ref=e129]: Aug 15
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - link "SOC runbook update — phishing response" [ref=e132] [cursor=pointer]:
+              - /url: /tasks/2
+              - generic [ref=e134]: SOC runbook update — phishing response
+            - img [ref=e136]:
+              - generic: 2026-07-18 → 2026-07-18
+              - generic: ↻
+          - generic [ref=e137]:
+            - link "Implement SOC monitoring dashboards" [ref=e138] [cursor=pointer]:
+              - /url: /tasks/1
+              - generic [ref=e140]: Implement SOC monitoring dashboards
+            - img [ref=e142]:
+              - generic: 2026-07-13 → 2026-07-20
+              - generic: ↻
+          - generic [ref=e143]:
+            - link "SOC tooling — EDR agent deployment" [ref=e144] [cursor=pointer]:
+              - /url: /tasks/16
+              - generic [ref=e146]: SOC tooling — EDR agent deployment
+            - img [ref=e148]:
+              - generic: 2026-07-22 → 2026-07-22
+              - generic: ↻
+          - generic [ref=e149]:
+            - link "Phishing simulation vendor evaluation" [ref=e150] [cursor=pointer]:
+              - /url: /tasks/8
+              - generic [ref=e152]: Phishing simulation vendor evaluation
+            - img [ref=e154]:
+              - generic: 2026-07-25 → 2026-07-25
+              - generic: ↻
+          - generic [ref=e155]:
+            - link "Patch critical vulnerabilities on web servers" [ref=e156] [cursor=pointer]:
+              - /url: /tasks/15
+              - generic [ref=e158]: Patch critical vulnerabilities on web servers
+            - img [ref=e160]:
+              - generic: 2026-07-01 → 2026-07-31
+              - generic: ↻
+          - generic [ref=e161]:
+            - link "NIST CSF mapping for new regulation" [ref=e162] [cursor=pointer]:
+              - /url: /tasks/5
+              - generic [ref=e164]: NIST CSF mapping for new regulation
+            - img [ref=e166]:
+              - generic: 2026-08-01 → 2026-08-01
+              - generic: ↻
+          - generic [ref=e167]:
+            - link "Security training Q3 planning" [ref=e168] [cursor=pointer]:
+              - /url: /tasks/7
+              - generic [ref=e170]: Security training Q3 planning
+            - img [ref=e172]:
+              - generic: 2026-08-01 → 2026-08-01
+              - generic: ↻
+          - generic [ref=e173]:
+            - link "Tabletop exercise — ransomware scenario" [ref=e174] [cursor=pointer]:
+              - /url: /tasks/3
+              - generic [ref=e176]: Tabletop exercise — ransomware scenario
+            - img [ref=e178]:
+              - generic: 2026-08-15 → 2026-08-15
+              - generic: ↻
+      - generic [ref=e179]:
+        - generic [ref=e180]: "Status:"
+        - generic [ref=e183]: backlog
+        - generic [ref=e186]: active
+        - generic [ref=e189]: delegated
+        - generic [ref=e192]: blocked
+        - generic [ref=e195]: done
