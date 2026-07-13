@@ -48,7 +48,7 @@
                 <template x-for="task in filteredTasks(status.key)" :key="task.id">
                     <div class="bg-surface border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all group"
                          draggable="true"
-                         @dragstart.prevent="onDragStart($event, task)"
+                         @dragstart="onDragStart($event, task)"
                          @dragend="onDragEnd($event)"
                          @click="previewTask(task)">
 
@@ -196,6 +196,7 @@ function board() {
         filterAssignee: '{{ assignee }}',
         draggedTask: null,
         dropTarget: null,
+        wasDragged: false,
         showPreview: false,
         previewTask: {},
 
@@ -225,6 +226,7 @@ function board() {
         },
 
         previewTask(task) {
+            if (this.wasDragged) { this.wasDragged = false; return; }
             this.previewTask = task;
             this.showPreview = true;
         },
@@ -249,6 +251,7 @@ function board() {
 
         onDragStart(event, task) {
             this.draggedTask = task;
+            this.wasDragged = true;
             event.target.classList.add('opacity-40', 'scale-95');
             event.dataTransfer.effectAllowed = 'move';
         },
