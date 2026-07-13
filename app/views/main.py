@@ -218,6 +218,30 @@ def calendar():
     return render_template("calendar.html")
 
 
+@main_bp.route("/gantt")
+def gantt():
+    project_id = request.args.get("project_id", "").strip()
+    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    projects = Project.query.order_by(Project.name).all()
+
+    task_data = []
+    for t in tasks:
+        task_data.append({
+            "id": t.id,
+            "title": t.title,
+            "status": t.status,
+            "due_date": t.due_date,
+            "project_id": t.project_id,
+        })
+
+    return render_template(
+        "gantt.html",
+        task_data=task_data,
+        projects=projects,
+        project_id=project_id,
+    )
+
+
 @main_bp.route("/api/calendar/events")
 def calendar_events():
     tasks = Task.query.filter(Task.due_date.isnot(None)).all()
