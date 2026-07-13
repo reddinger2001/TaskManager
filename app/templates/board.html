@@ -50,7 +50,7 @@
                          draggable="true"
                          @dragstart="onDragStart($event, task)"
                          @dragend="onDragEnd($event)"
-                         @click="previewTask(task)">
+                         @click="$data.preview(task)">
 
                         <!-- Priority + Title -->
                         <div class="flex items-start justify-between gap-2">
@@ -225,7 +225,7 @@ function board() {
             // Filters are reactive via Alpine — no action needed
         },
 
-        previewTask(task) {
+        preview(task) {
             if (this.wasDragged) { this.wasDragged = false; return; }
             this.previewTask = task;
             this.showPreview = true;
