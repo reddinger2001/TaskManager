@@ -12,54 +12,38 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.route("/")
 def index():
+    # Single query for all non-done tasks — split in Python
+    tasks = Task.query.filter(Task.status != "done").all()
+
     # On Fire: P0 tasks + all blocked tasks
-    on_fire = (
-        db.session.query(Task)
-        .filter(db.or_(Task.priority == "P0", Task.status == "blocked"))
-        .order_by(
-            db.case((Task.priority == "P0", 0), else_=1),
-            Task.created_at.desc(),
-        )
-        .all()
+    on_fire = sorted(
+        [t for t in tasks if t.priority == "P0" or t.status == "blocked"],
+        key=lambda t: (0 if t.priority == "P0" else 1, -t.created_at.timestamp()),
     )
 
     # Delegated: tasks with status=delegated, grouped by assignee
-    delegated = (
-        db.session.query(Task)
-        .filter(Task.status == "delegated", Task.assignee.isnot(None))
-        .order_by(Task.assignee, Task.created_at.desc())
-        .all()
+    delegated = sorted(
+        [t for t in tasks if t.status == "delegated" and t.assignee],
+        key=lambda t: (t.assignee or "", -t.created_at.timestamp()),
     )
 
     # Active: tasks with status=active
-    active = (
-        db.session.query(Task)
-        .filter(Task.status == "active")
-        .order_by(Task.created_at.desc())
-        .all()
+    active = sorted(
+        [t for t in tasks if t.status == "active"],
+        key=lambda t: -t.created_at.timestamp(),
     )
 
     # Backlog: tasks with status=backlog, sorted by priority then due date
-    backlog = (
-        db.session.query(Task)
-        .filter(Task.status == "backlog")
-        .order_by(
-            db.case(
-                (Task.priority == "P1", 0),
-                (Task.priority == "P2", 1),
-                else_=2,
-            ),
-            Task.due_date.asc(),
-        )
-        .all()
+    priority_order = {"P1": 0, "P2": 1}
+    backlog = sorted(
+        [t for t in tasks if t.status == "backlog"],
+        key=lambda t: (priority_order.get(t.priority, 2), t.due_date or "9999-99-99"),
     )
 
     # Inbox: tasks with no project assigned
-    inbox = (
-        db.session.query(Task)
-        .filter(Task.project_id.is_(None))
-        .order_by(Task.created_at.desc())
-        .all()
+    inbox = sorted(
+        [t for t in tasks if t.project_id is None],
+        key=lambda t: -t.created_at.timestamp(),
     )
 
     # Projects for the capture modal dropdown
@@ -230,7 +214,7 @@ def gantt():
             "id": t.id,
             "title": t.title,
             "status": t.status,
-            "start_date": t.start_date or t.due_date,
+            "start_date": t.start_date or t.created_at.strftime("%Y-%m-%d"),
             "due_date": t.due_date,
             "project_id": t.project_id,
             "recurrence": t.recurrence or None,

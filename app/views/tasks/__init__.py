@@ -234,14 +234,49 @@ def create():
     return redirect(url_for("tasks.detail", task_id=task.id))
 
 
+def _find_related_captures(query_text, exclude_ids=None, limit=5):
+    """Find related inbox tasks via FTS5 keyword search.
+
+    Searches the FTS5 index for tasks matching the query text,
+    scoped to inbox items (no project assigned) and excluding given IDs.
+    Falls back to empty list if FTS5 fails.
+    """
+    from app.extensions import get_vec_connection
+
+    try:
+        conn = get_vec_connection()
+        rows = conn.execute(
+            "SELECT task_id FROM search_index WHERE search_index MATCH ? ORDER BY rank LIMIT ?",
+            (query_text, limit),
+        ).fetchall()
+        conn.close()
+
+        if not rows:
+            return []
+
+        task_ids = [r[0] for r in rows]
+        if exclude_ids:
+            task_ids = [tid for tid in task_ids if tid not in set(exclude_ids)]
+
+        return Task.query.filter(
+            Task.id.in_(task_ids),
+            Task.project_id.is_(None),
+        ).all()
+    except Exception:
+        return []
+
+
 @tasks_bp.route("/tasks/<int:task_id>")
 def detail(task_id):
     task = Task.query.get_or_404(task_id)
     projects = Project.query.order_by(Project.name).all()
     assignees = sorted(set(t.assignee for t in Task.query.filter(Task.assignee.isnot(None)).all() if t.assignee))
 
-    # Semantic search — disabled (embedding model causes crashes)
-    related_captures = []
+    # FTS5-based related captures (inbox tasks matching this task's content)
+    search_text = task.title
+    if task.description:
+        search_text += " " + task.description
+    related_captures = _find_related_captures(search_text, exclude_ids=[task.id])
 
     return render_template(
         "tasks/detail.html",

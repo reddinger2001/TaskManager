@@ -64,8 +64,12 @@ def detail(project_id):
         Task.project_id.in_(descendant_ids),
     ).order_by(Task.created_at.desc()).all()
 
-    # Semantic search — disabled (embedding model causes crashes)
-    related_captures = []
+    # FTS5-based related captures (inbox tasks matching this project's content)
+    from app.views.tasks import _find_related_captures
+    search_text = project.name
+    if project.description:
+        search_text += " " + project.description
+    related_captures = _find_related_captures(search_text)
 
     all_projects = Project.query.order_by(Project.name.asc()).all()
     return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects)

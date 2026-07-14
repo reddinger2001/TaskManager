@@ -30,10 +30,27 @@ class Project(db.Model):
     )
 
     def get_descendant_ids(self, include_self=True):
-        """Get IDs of this project and all descendants (recursive)."""
-        ids = {self.id} if include_self else set()
-        for child in self.children:
-            ids.update(child.get_descendant_ids())
+        """Get IDs of this project and all descendants using a recursive CTE.
+
+        Single SQL query instead of N+1 Python traversal.
+        """
+        from sqlalchemy import text
+
+        result = db.session.execute(
+            text("""
+                WITH RECURSIVE descendants(id) AS (
+                    SELECT :root_id
+                    UNION ALL
+                    SELECT p.id FROM projects p INNER JOIN descendants d ON p.parent_id = d.id
+                )
+                SELECT id FROM descendants
+            """),
+            {"root_id": self.id},
+        ).fetchall()
+
+        ids = {row[0] for row in result}
+        if not include_self:
+            ids.discard(self.id)
         return ids
 
     def is_ancestor_of(self, other_project):

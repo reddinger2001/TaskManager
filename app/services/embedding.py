@@ -3,6 +3,10 @@
 Generates 384-dim float vectors using the all-MiniLM-L6-v2 model for semantic
 search via sqlite-vec. Caches the model instance globally so it is loaded only
 once per process.
+
+Note: sentence_transformers is imported lazily inside functions to avoid
+blocking app startup. The FTS5 hooks in this module do NOT depend on the
+embedding model and can be used independently.
 """
 
 from __future__ import annotations
@@ -11,14 +15,12 @@ import json
 import logging
 from typing import List
 
-from sentence_transformers import SentenceTransformer
-
 logger = logging.getLogger(__name__)
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 
-_model: SentenceTransformer | None = None
+_model = None
 
 # Queue of (task_id, title, description) to embed after commit.
 _pending_embeddings: List[tuple] = []
@@ -27,10 +29,14 @@ _pending_embeddings: List[tuple] = []
 _pending_fts5: List[tuple] = []
 
 
-def get_model() -> SentenceTransformer:
-    """Return the singleton embedding model, loading it on first call."""
+def get_model():
+    """Return the singleton embedding model, loading it on first call.
+
+    Lazily imports sentence_transformers to avoid blocking app startup.
+    """
     global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(MODEL_NAME)
     return _model
 
@@ -182,11 +188,25 @@ def _flush_pending():
         conn.close()
 
 
+def _warmup_in_background():
+    """Load the embedding model in a background thread so it doesn't block create_app()."""
+    try:
+        logger.info("Warming up embedding model (%s) in background ...", MODEL_NAME)
+        get_model()
+        logger.info("Embedding model ready")
+    except Exception:
+        logger.exception("Failed to load embedding model — semantic search will be unavailable")
+
+
 def warmup_model():
-    """Pre-load the embedding model in the main thread."""
-    logger.info("Warming up embedding model (%s) ...", MODEL_NAME)
-    get_model()
-    logger.info("Embedding model ready")
+    """Start loading the embedding model in a background thread.
+
+    Does NOT block create_app() — the model loads asynchronously.
+    If loading fails, embeddings simply won't work (graceful degradation).
+    """
+    import threading
+    t = threading.Thread(target=_warmup_in_background, daemon=True)
+    t.start()
 
 
 def register_embedding_hooks(app):

@@ -21,10 +21,14 @@ def create_app():
     # Initialize database and extensions
     init_extensions(app)
 
-    # Register embedding hooks (after_commit → sync embed + FTS5)
-    from app.services.embedding import register_embedding_hooks, register_fts5_hooks
-    register_embedding_hooks(app)
+    # Register FTS5 hooks (always on — keeps keyword search index in sync)
+    from app.services.embedding import register_fts5_hooks
     register_fts5_hooks(app)
+
+    # Register embedding hooks only if enabled (disabled by default — model crashes Python)
+    if app.config.get("EMBEDDING_ENABLED", False):
+        from app.services.embedding import register_embedding_hooks
+        register_embedding_hooks(app)
 
     from app.views.main import main_bp
     app.register_blueprint(main_bp)
