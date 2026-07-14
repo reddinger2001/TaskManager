@@ -263,7 +263,7 @@
                         {% endif %}
                     </td>
                     <!-- Due -->
-                    <td class="px-4 py-2.5 text-xs mono text-muted">{{ t.due_date or '—' }}</td>
+                    <td class="px-4 py-2.5 text-xs mono {% if t.due_date and t.due_date < today_str and t.status != 'done' %}text-red-400 font-bold{% else %}text-muted{% endif %}">{{ t.due_date or '—' }}</td>
                     <!-- Assignee -->
                     <td class="px-4 py-2.5 text-xs text-muted">{{ t.assignee or '—' }}</td>
                     <!-- Project -->

@@ -37,6 +37,8 @@ def app(test_db_path):
         base_dir = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), ".."))
         app = Flask(__name__, template_folder=_os.path.join(base_dir, "app", "templates"))
         app.config.from_object("app.config.Config")
+        # Disable CSRF in tests — test client doesn't carry tokens
+        app.config["WTF_CSRF_ENABLED"] = False
 
         from app.extensions import init_extensions
         init_extensions(app)

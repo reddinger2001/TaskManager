@@ -27,19 +27,22 @@ SORT_FIELDS = {
 DEFAULT_SORT = ("created_at", "desc")
 
 
-@tasks_bp.route("/tasks")
-def list_tasks():
+def build_task_query():
+    """Build a filtered/sorted Task query from the current request args.
+
+    Shared by list_tasks and export_csv to avoid duplicating ~60 lines of logic.
+    Returns (query, sort_field, sort_order) tuple.
+    """
     q = request.args.get("q", "").strip()
     status = request.args.get("status", "")
     priority = request.args.get("priority", "")
     project_id = request.args.get("project_id", "")
     assignee = request.args.get("assignee", "").strip()
     tag = request.args.get("tag", "").strip()
-    date_field = request.args.get("date_field", "due_date")  # due_date, completed_at, created_at
+    date_field = request.args.get("date_field", "due_date")
     date_from = request.args.get("date_from", "").strip()
     date_to = request.args.get("date_to", "").strip()
 
-    # Sorting
     sort_field = request.args.get("sort", DEFAULT_SORT[0])
     sort_order = request.args.get("order", DEFAULT_SORT[1]).lower()
     if sort_field not in SORT_FIELDS:
@@ -49,7 +52,6 @@ def list_tasks():
 
     query = Task.query.outerjoin(Project, Task.project_id == Project.id)
 
-    # Filters
     if q:
         query = query.filter(Task.title.ilike(f"%{q}%"))
     if status and status in STATUSES:
@@ -63,9 +65,8 @@ def list_tasks():
     if assignee:
         query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
     if tag:
-        # Filter by JSON array contains the tag (case-insensitive via SQLite)
         query = query.filter(Task.tags.contains(f'"{tag}"'))
-    # Date range filter — choose which date field to filter on
+
     DATE_FIELDS = {
         "due_date": Task.due_date,
         "completed_at": Task.completed_at,
@@ -78,12 +79,27 @@ def list_tasks():
         if date_to:
             query = query.filter(col <= date_to)
 
-    # Sorting — nulls last for nullable columns
     sort_col = SORT_FIELDS[sort_field]
     if sort_order == "desc":
         sort_col = sort_col.desc()
 
-    tasks = query.order_by(sort_col, Task.created_at.desc()).all()
+    return query.order_by(sort_col, Task.created_at.desc()), sort_field, sort_order
+
+
+@tasks_bp.route("/tasks")
+def list_tasks():
+    q = request.args.get("q", "").strip()
+    status = request.args.get("status", "")
+    priority = request.args.get("priority", "")
+    project_id = request.args.get("project_id", "")
+    assignee = request.args.get("assignee", "").strip()
+    tag = request.args.get("tag", "").strip()
+    date_field = request.args.get("date_field", "due_date")
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    query, sort_field, sort_order = build_task_query()
+    tasks = query.all()
 
     # Gather filter options
     projects = Project.query.order_by(Project.name).all()
@@ -111,6 +127,7 @@ def list_tasks():
         priorities=PRIORITIES,
         assignees=assignees,
         all_tags=all_tags,
+        today_str=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         current_q=q,
         current_status=status,
         current_priority=priority,
@@ -128,56 +145,8 @@ def list_tasks():
 @tasks_bp.route("/tasks/export.csv")
 def export_csv():
     """Export task list as CSV, applying current filters."""
-    # Reuse the same filter/sort logic as list_tasks
-    q = request.args.get("q", "").strip()
-    status = request.args.get("status", "")
-    priority = request.args.get("priority", "")
-    project_id = request.args.get("project_id", "")
-    assignee = request.args.get("assignee", "").strip()
-    tag = request.args.get("tag", "").strip()
-    date_field = request.args.get("date_field", "due_date")
-    date_from = request.args.get("date_from", "").strip()
-    date_to = request.args.get("date_to", "").strip()
-    sort_field = request.args.get("sort", DEFAULT_SORT[0])
-    sort_order = request.args.get("order", DEFAULT_SORT[1]).lower()
-    if sort_field not in SORT_FIELDS:
-        sort_field = DEFAULT_SORT[0]
-    if sort_order not in ("asc", "desc"):
-        sort_order = DEFAULT_SORT[1]
-
-    query = Task.query.outerjoin(Project, Task.project_id == Project.id)
-
-    if q:
-        query = query.filter(Task.title.ilike(f"%{q}%"))
-    if status and status in STATUSES:
-        query = query.filter(Task.status == status)
-    elif status == "inbox":
-        query = query.filter(Task.project_id.is_(None))
-    if priority and priority in PRIORITIES:
-        query = query.filter(Task.priority == priority)
-    if project_id:
-        query = query.filter(Task.project_id == int(project_id))
-    if assignee:
-        query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
-    if tag:
-        query = query.filter(Task.tags.contains(f'"{tag}"'))
-
-    DATE_FIELDS = {
-        "due_date": Task.due_date,
-        "completed_at": Task.completed_at,
-        "created_at": Task.created_at,
-    }
-    if date_field in DATE_FIELDS and (date_from or date_to):
-        col = DATE_FIELDS[date_field]
-        if date_from:
-            query = query.filter(col >= date_from)
-        if date_to:
-            query = query.filter(col <= date_to)
-
-    sort_col = SORT_FIELDS[sort_field]
-    if sort_order == "desc":
-        sort_col = sort_col.desc()
-    tasks = query.order_by(sort_col, Task.created_at.desc()).all()
+    query, _sort_field, _sort_order = build_task_query()
+    tasks = query.all()
 
     # Generate CSV
     output = io.StringIO()

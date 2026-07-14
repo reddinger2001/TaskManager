@@ -103,6 +103,22 @@
     {% block content %}{% endblock %}
 </main>
 
+<script>
+// Inject CSRF token into all POST forms
+(function() {
+    var token = "{{ csrf_token() if csrf_token is defined else '' }}";
+    if (!token) return;
+    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function(form) {
+        if (!form.querySelector('input[name="csrf_token"]')) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrf_token';
+            input.value = token;
+            form.appendChild(input);
+        }
+    });
+})();
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

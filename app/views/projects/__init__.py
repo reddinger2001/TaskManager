@@ -1,4 +1,7 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from sqlalchemy import text
 
 from app.models import Project, Task, db
 
@@ -24,11 +27,35 @@ def _auto_color() -> str:
 
 @projects_bp.route("/projects")
 def list_projects():
-    projects = Project.query.order_by(Project.created_at.desc()).all()
-    for p in projects:
-        p.task_count = len(p.tasks)
-        done = sum(1 for t in p.tasks if t.status == "done")
-        p.completion_pct = int(done / p.task_count * 100) if p.task_count else 0
+    from sqlalchemy import text
+
+    # Single query with task_count and completion_pct computed in SQL
+    results = db.session.execute(text("""
+        SELECT
+            p.id, p.name, p.description, p.color, p.parent_id,
+            p.start_date, p.end_date, p.created_at, p.updated_at,
+            COUNT(t.id) AS task_count,
+            COALESCE(
+                CAST(SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) * 100.0
+                    / NULLIF(COUNT(t.id), 0) AS INTEGER),
+                0
+            ) AS completion_pct
+        FROM projects p
+        LEFT JOIN tasks t ON p.id = t.project_id
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+    """)).fetchall()
+
+    # Build Project objects from raw rows (template expects Project instances)
+    projects = []
+    for row in results:
+        p = Project(id=row[0], name=row[1], description=row[2], color=row[3],
+                     parent_id=row[4], start_date=row[5], end_date=row[6],
+                     created_at=row[7], updated_at=row[8])
+        p.task_count = row[9]
+        p.completion_pct = row[10]
+        projects.append(p)
+
     return render_template("projects/list.html", projects=projects)
 
 
@@ -72,7 +99,8 @@ def detail(project_id):
     related_captures = _find_related_captures(search_text)
 
     all_projects = Project.query.order_by(Project.name.asc()).all()
-    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects)
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, today_str=today_str)
 
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])

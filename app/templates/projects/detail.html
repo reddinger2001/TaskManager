@@ -179,7 +179,7 @@
 
         <!-- Due date -->
         {% if t.due_date %}
-        <span class="text-[10px] mono text-muted ml-auto">{{ t.due_date }}</span>
+        <span class="text-[10px] mono ml-auto{% if t.due_date < today_str and t.status != 'done' %} text-red-400 font-bold{% else %} text-muted{% endif %}">{{ t.due_date }}</span>
         {% endif %}
     </div>
     {% endfor %}
