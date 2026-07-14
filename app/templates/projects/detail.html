@@ -250,15 +250,17 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script type="application/json" id="project-data">{{ { 'name': project.name, 'description': project.description or '', 'color': project.color or '#1a2332', 'start_date': project.start_date or '', 'end_date': project.end_date or '', 'parent_id': project.parent_id } | tojson }}</script>
 <script>
 function projectForm() {
+    const data = JSON.parse(document.getElementById('project-data').textContent);
     return {
-        name: '{{ project.name | e }}',
-        description: `{{ project.description or '' | e }}`,
-        color: '{{ project.color or "#1a2332" }}',
-        start_date: '{{ project.start_date or "" }}',
-        end_date: '{{ project.end_date or "" }}',
-        parent_id: {{ project.parent_id | tojson }},
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        parent_id: data.parent_id,
 
         saveProject() {
             fetch('/projects/{{ project.id }}', {

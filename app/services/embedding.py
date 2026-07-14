@@ -212,6 +212,37 @@ def register_embedding_hooks(app):
         _flush_pending()
 
 
+def backfill_fts5():
+    """Backfill FTS5 index for all existing tasks.
+
+    Called once at app startup. Clears the index first to avoid duplicates
+    from repeated runs.
+    """
+    from app.extensions import get_vec_connection
+    from app.models import Task, db
+
+    try:
+        conn = get_vec_connection()
+        # Clear existing index to avoid duplicates
+        conn.execute("DELETE FROM search_index")
+        conn.commit()
+
+        tasks = db.session.query(Task).all()
+        for task in tasks:
+            tags_text = " ".join(task.get_tags()) if task.tags else ""
+            conn.execute(
+                "INSERT INTO search_index(task_id, title, description, tags_text) VALUES (?, ?, ?, ?)",
+                (task.id, task.title or "", task.description or "", tags_text),
+            )
+        conn.commit()
+        logger.info("FTS5 backfill complete: %d tasks indexed", len(tasks))
+    except Exception:
+        logger.exception("FTS5 backfill failed")
+    finally:
+        if 'conn' in dir():
+            conn.close()
+
+
 def register_fts5_hooks(app):
     """Register SQLAlchemy event hooks to keep FTS5 search_index in sync.
 
@@ -221,6 +252,10 @@ def register_fts5_hooks(app):
     from sqlalchemy import event
     from sqlalchemy.orm import Session
     from app.models import Task
+
+    # Backfill existing tasks on startup
+    with app.app_context():
+        backfill_fts5()
 
     @event.listens_for(Session, "after_flush")
     def _on_flush(session, flush_context):
@@ -249,8 +284,10 @@ def _flush_fts5():
         conn = get_vec_connection()
         try:
             for task_id, title, description, tags_text in tasks:
+                # Delete old row first — FTS5 doesn't support REPLACE on non-UNINDEXED columns
+                conn.execute("DELETE FROM search_index WHERE task_id = ?", (task_id,))
                 conn.execute(
-                    "INSERT OR REPLACE INTO search_index(task_id, title, description, tags_text) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO search_index(task_id, title, description, tags_text) VALUES (?, ?, ?, ?)",
                     (task_id, title, description, tags_text),
                 )
             conn.commit()

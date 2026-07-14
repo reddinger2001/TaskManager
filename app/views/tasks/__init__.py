@@ -54,6 +54,8 @@ def list_tasks():
         query = query.filter(Task.title.ilike(f"%{q}%"))
     if status and status in STATUSES:
         query = query.filter(Task.status == status)
+    elif status == "inbox":
+        query = query.filter(Task.project_id.is_(None))
     if priority and priority in PRIORITIES:
         query = query.filter(Task.priority == priority)
     if project_id:
@@ -149,6 +151,8 @@ def export_csv():
         query = query.filter(Task.title.ilike(f"%{q}%"))
     if status and status in STATUSES:
         query = query.filter(Task.status == status)
+    elif status == "inbox":
+        query = query.filter(Task.project_id.is_(None))
     if priority and priority in PRIORITIES:
         query = query.filter(Task.priority == priority)
     if project_id:
