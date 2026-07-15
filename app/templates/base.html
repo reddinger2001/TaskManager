@@ -104,11 +104,11 @@
 </main>
 
 <script>
-// Inject CSRF token into all POST forms
+// Inject CSRF token into all POST forms — uses MutationObserver to catch dynamically added forms
 (function() {
     var token = "{{ csrf_token() if csrf_token is defined else '' }}";
     if (!token) return;
-    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function(form) {
+    function injectCSRF(form) {
         if (!form.querySelector('input[name="csrf_token"]')) {
             var input = document.createElement('input');
             input.type = 'hidden';
@@ -116,7 +116,23 @@
             input.value = token;
             form.appendChild(input);
         }
+    }
+    // Initial injection
+    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(injectCSRF);
+    // Watch for dynamically added forms (Alpine.js modals, etc.)
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    if (node.tagName === 'FORM' && (node.method === 'post' || node.method === 'POST')) {
+                        injectCSRF(node);
+                    }
+                    node.querySelectorAll('form[method="post"], form[method="POST"]').forEach(injectCSRF);
+                }
+            });
+        });
     });
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
 <script>

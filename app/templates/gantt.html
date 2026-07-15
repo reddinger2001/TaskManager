@@ -193,9 +193,9 @@ function gantt() {
         },
 
         taskBarX(task) {
-            const due = new Date(task.due_date);
+            const taskStart = new Date(task.start_date || task.due_date);
             const start = new Date(this.startDate);
-            const diffDays = Math.round((due - start) / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round((taskStart - start) / (1000 * 60 * 60 * 24));
             return diffDays * this.dayWidth + 2;
         },
 

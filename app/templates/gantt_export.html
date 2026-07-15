@@ -125,8 +125,8 @@ function renderGantt() {
     tasks.forEach(task => {
         const due = new Date(task.due_date);
         const taskStart = new Date(task.start_date || task.due_date);
-        const diffDaysDue = Math.round((due - start) / (1000*60*60*24));
-        const barX = diffDaysDue * DAY_WIDTH + 2;
+        const diffDaysStart = Math.round((taskStart - start) / (1000*60*60*24));
+        const barX = diffDaysStart * DAY_WIDTH + 2;
         const spanDays = Math.round((due - taskStart) / (1000*60*60*24)) + 1;
         const barWidth = Math.max(spanDays * DAY_WIDTH - 4, 16);
         const color = statusColor[task.status] || '#6b7280';

@@ -274,11 +274,13 @@ def calendar_events():
         if t.recurrence and t.due_date:
             events.extend(_generate_recurring_events(t, color_map))
         else:
-            # Calendar shows due_date only — multi-day spans belong on Gantt
+            # Show task as a span from start_date to due_date
+            task_start = t.start_date or t.due_date
             events.append({
                 "id": str(t.id),
                 "title": t.title,
-                "start": t.due_date.isoformat(),
+                "start": task_start.isoformat(),
+                "end": t.due_date.isoformat(),
                 "url": f"/tasks/{t.id}",
                 "backgroundColor": color_map.get(t.status, "#6b7280"),
                 "borderColor": color_map.get(t.status, "#6b7280"),
