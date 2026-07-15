@@ -1,3 +1,5 @@
+from datetime import date
+
 import json
 import re
 
@@ -35,9 +37,10 @@ def index():
 
     # Backlog: tasks with status=backlog, sorted by priority then due date
     priority_order = {"P1": 0, "P2": 1}
+    far_future = date(9999, 9, 9)
     backlog = sorted(
         [t for t in tasks if t.status == "backlog"],
-        key=lambda t: (priority_order.get(t.priority, 2), t.due_date or "9999-99-99"),
+        key=lambda t: (priority_order.get(t.priority, 2), t.due_date or far_future),
     )
 
     # Inbox: tasks with no project assigned
@@ -183,7 +186,7 @@ def board():
             "assignee": t.assignee or "",
             "project": t.project.name if t.project else "",
             "project_id": t.project_id,
-            "due_date": t.due_date if t.due_date else "",
+            "due_date": t.due_date.isoformat() if t.due_date else "",
             "tags": tags,
         })
 
@@ -214,8 +217,8 @@ def gantt():
             "id": t.id,
             "title": t.title,
             "status": t.status,
-            "start_date": t.start_date or t.created_at.strftime("%Y-%m-%d"),
-            "due_date": t.due_date,
+            "start_date": (t.start_date or t.created_at.date()).isoformat(),
+            "due_date": t.due_date.isoformat() if t.due_date else None,
             "project_id": t.project_id,
             "recurrence": t.recurrence or None,
         })
@@ -248,7 +251,7 @@ def calendar_events():
             events.append({
                 "id": str(t.id),
                 "title": t.title,
-                "start": t.due_date,
+                "start": t.due_date.isoformat(),
                 "url": f"/tasks/{t.id}",
                 "backgroundColor": color_map.get(t.status, "#6b7280"),
                 "borderColor": color_map.get(t.status, "#6b7280"),
@@ -263,8 +266,8 @@ def _generate_recurring_events(task, color_map):
     completed = set(task.get_completed_dates())
 
     # Start from due_date (first occurrence)
-    start = datetime.strptime(task.due_date, "%Y-%m-%d")
-    end_limit = datetime.strptime(task.recurrence_end, "%Y-%m-%d") if task.recurrence_end else (start + timedelta(days=365))
+    start = datetime.combine(task.due_date, datetime.min.time())
+    end_limit = datetime.combine(task.recurrence_end, datetime.min.time()) if task.recurrence_end else (start + timedelta(days=365))
 
     current = start
     while current <= end_limit:

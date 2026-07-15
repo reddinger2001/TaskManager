@@ -46,7 +46,7 @@
 </div>
 
 <!-- Task Form -->
-<script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'start_date': task.start_date or '', 'due_date': task.due_date or '', 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links(), 'recurrence': task.recurrence or '', 'recurrence_end': task.recurrence_end or '' } | tojson }}</script>
+<script type="application/json" id="task-data">{{ { 'title': task.title, 'description': task.description or '', 'status': task.status, 'priority': task.priority or '', 'start_date': (task.start_date.isoformat() if task.start_date else ''), 'due_date': (task.due_date.isoformat() if task.due_date else ''), 'assignee': task.assignee or '', 'project_id': task.project_id, 'tags': task.get_tags(), 'links': task.get_links(), 'recurrence': task.recurrence or '', 'recurrence_end': (task.recurrence_end.isoformat() if task.recurrence_end else '') } | tojson }}</script>
 <div x-data="taskForm()">
 
 <div class="bg-panel border border-border rounded-lg p-5 mb-6 space-y-4">
@@ -329,7 +329,13 @@ function taskForm() {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: this.title, description: this.description, status: this.status, priority: this.priority, start_date: this.start_date, due_date: this.due_date, assignee: this.assignee, project_id: this.project_id, tags: this.tags, links: this.links, recurrence: this.recurrence, recurrence_end: this.recurrence_end })
-            }).then(r => r.json()).then(() => location.reload());
+            }).then(r => {
+                if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'Save failed'); });
+                return r.json();
+            }).then(() => location.reload()).catch(err => {
+                this.saving = false;
+                alert('Failed to save: ' + err.message);
+            });
         },
 
         addTag() {

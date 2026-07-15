@@ -1,5 +1,7 @@
 """Pytest configuration and shared fixtures for TaskManager tests."""
 
+from datetime import date
+
 import os
 import tempfile
 
@@ -132,8 +134,8 @@ def populated_db(app):
 
         # Tasks across statuses and priorities
         tasks = [
-            Task(title="Resolve P0 outage", description="Critical production incident", status="blocked", priority="P0", assignee="Chris", due_date="2026-07-15", project_id=proj1.id),
-            Task(title="Update firewall rules", status="active", priority="P1", assignee="Chris", due_date="2026-07-20", project_id=proj1.id),
+            Task(title="Resolve P0 outage", description="Critical production incident", status="blocked", priority="P0", assignee="Chris", due_date=date(2026, 7, 15), project_id=proj1.id),
+            Task(title="Update firewall rules", status="active", priority="P1", assignee="Chris", due_date=date(2026, 7, 20), project_id=proj1.id),
             Task(title="Review vendor contracts", status="delegated", assignee="Sarah", project_id=proj2.id),
             Task(title="Write API docs", status="delegated", assignee="Sarah", project_id=proj2.id),
             Task(title="Deploy monitoring agent", status="delegated", assignee="Mike", project_id=proj1.id),

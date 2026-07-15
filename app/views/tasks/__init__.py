@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
 
@@ -75,9 +75,9 @@ def build_task_query():
     if date_field in DATE_FIELDS and (date_from or date_to):
         col = DATE_FIELDS[date_field]
         if date_from:
-            query = query.filter(col >= date_from)
+            query = query.filter(col >= date.fromisoformat(date_from))
         if date_to:
-            query = query.filter(col <= date_to)
+            query = query.filter(col <= date.fromisoformat(date_to))
 
     sort_col = SORT_FIELDS[sort_field]
     if sort_order == "desc":
@@ -127,7 +127,7 @@ def list_tasks():
         priorities=PRIORITIES,
         assignees=assignees,
         all_tags=all_tags,
-        today_str=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        today_date=date.today(),
         current_q=q,
         current_status=status,
         current_priority=priority,
@@ -184,12 +184,12 @@ def create():
         description=request.form.get("description", "").strip() or None,
         status=request.form.get("status", "backlog") or "backlog",
         priority=request.form.get("priority") or None,
-        start_date=request.form.get("start_date") or None,
-        due_date=request.form.get("due_date") or None,
+        start_date=date.fromisoformat(request.form["start_date"]) if request.form.get("start_date") else None,
+        due_date=date.fromisoformat(request.form["due_date"]) if request.form.get("due_date") else None,
         assignee=request.form.get("assignee", "").strip() or None,
         project_id=int(request.form["project_id"]) if request.form.get("project_id") else None,
         recurrence=request.form.get("recurrence") or None,
-        recurrence_end=request.form.get("recurrence_end") or None,
+        recurrence_end=date.fromisoformat(request.form["recurrence_end"]) if request.form.get("recurrence_end") else None,
     )
 
     # Handle tags from comma-separated input
@@ -276,13 +276,13 @@ def update(task_id):
     if "priority" in data:
         task.priority = data["priority"] or None
     if "start_date" in data:
-        task.start_date = data["start_date"] or None
+        task.start_date = date.fromisoformat(data["start_date"]) if data["start_date"] else None
     if "due_date" in data:
-        task.due_date = data["due_date"] or None
+        task.due_date = date.fromisoformat(data["due_date"]) if data["due_date"] else None
     if "recurrence" in data:
         task.recurrence = data["recurrence"] or None
     if "recurrence_end" in data:
-        task.recurrence_end = data["recurrence_end"] or None
+        task.recurrence_end = date.fromisoformat(data["recurrence_end"]) if data["recurrence_end"] else None
     if "assignee" in data:
         task.assignee = data["assignee"].strip() or None
     if "project_id" in data:

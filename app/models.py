@@ -1,8 +1,8 @@
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 db = SQLAlchemy()
@@ -16,8 +16,8 @@ class Project(db.Model):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)
     parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
-    start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
-    end_date: Mapped[str | None] = mapped_column(String(10), nullable=True)    # YYYY-MM-DD
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
@@ -71,11 +71,11 @@ class Task(db.Model):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="backlog")
     priority: Mapped[str | None] = mapped_column(String(5), nullable=True)
-    start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
-    due_date: Mapped[str | None] = mapped_column(String(10), nullable=True)     # YYYY-MM-DD
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     assignee: Mapped[str | None] = mapped_column(String(100), nullable=True)
     recurrence: Mapped[str | None] = mapped_column(String(10), nullable=True)   # daily, weekly, monthly
-    recurrence_end: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
+    recurrence_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     completed_dates: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON array of YYYY-MM-DD
     project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy import text
@@ -72,8 +72,8 @@ def create():
         name=name,
         description=request.form.get("description", "").strip() or None,
         color=_auto_color(),
-        start_date=request.form.get("start_date") or None,
-        end_date=request.form.get("end_date") or None,
+        start_date=date.fromisoformat(request.form["start_date"]) if request.form.get("start_date") else None,
+        end_date=date.fromisoformat(request.form["end_date"]) if request.form.get("end_date") else None,
         parent_id=parent_id,
     )
     db.session.add(project)
@@ -99,8 +99,8 @@ def detail(project_id):
     related_captures = _find_related_captures(search_text)
 
     all_projects = Project.query.order_by(Project.name.asc()).all()
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, today_str=today_str)
+    today_date = date.today()
+    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, today_date=today_date)
 
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])
@@ -115,9 +115,9 @@ def update(project_id):
     if "color" in data:
         project.color = data["color"] or None
     if "start_date" in data:
-        project.start_date = data["start_date"] or None
+        project.start_date = date.fromisoformat(data["start_date"]) if data["start_date"] else None
     if "end_date" in data:
-        project.end_date = data["end_date"] or None
+        project.end_date = date.fromisoformat(data["end_date"]) if data["end_date"] else None
     if "parent_id" in data:
         new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
         # Prevent circular references: can't set parent to self or a descendant

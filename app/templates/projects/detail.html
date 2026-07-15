@@ -179,7 +179,7 @@
 
         <!-- Due date -->
         {% if t.due_date %}
-        <span class="text-[10px] mono ml-auto{% if t.due_date < today_str and t.status != 'done' %} text-red-400 font-bold{% else %} text-muted{% endif %}">{{ t.due_date }}</span>
+        <span class="text-[10px] mono ml-auto{% if t.due_date < today_date and t.status != 'done' %} text-red-400 font-bold{% else %} text-muted{% endif %}">{{ t.due_date }}</span>
         {% endif %}
     </div>
     {% endfor %}
@@ -250,7 +250,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="application/json" id="project-data">{{ { 'name': project.name, 'description': project.description or '', 'color': project.color or '#1a2332', 'start_date': project.start_date or '', 'end_date': project.end_date or '', 'parent_id': project.parent_id } | tojson }}</script>
+<script type="application/json" id="project-data">{{ { 'name': project.name, 'description': project.description or '', 'color': project.color or '#1a2332', 'start_date': (project.start_date.isoformat() if project.start_date else ''), 'end_date': (project.end_date.isoformat() if project.end_date else ''), 'parent_id': project.parent_id } | tojson }}</script>
 <script>
 function projectForm() {
     const data = JSON.parse(document.getElementById('project-data').textContent);
@@ -267,7 +267,12 @@ function projectForm() {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: this.name, description: this.description, color: this.color, start_date: this.start_date, end_date: this.end_date, parent_id: this.parent_id })
-            }).then(r => r.json()).then(() => location.reload());
+            }).then(r => {
+                if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'Save failed'); });
+                return r.json();
+            }).then(() => location.reload()).catch(err => {
+                alert('Failed to save: ' + err.message);
+            });
         }
     };
 }

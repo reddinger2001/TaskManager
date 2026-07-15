@@ -119,6 +119,27 @@
     });
 })();
 </script>
+<script>
+// Keyboard shortcut: Ctrl+K or / to open capture modal
+(function() {
+    document.addEventListener('keydown', function(e) {
+        // Ignore if user is typing in an input/textarea/select
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+        // Ctrl+K or Cmd+K
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('open-modal'));
+        }
+        // Press / to open (only when not in a form element)
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('open-modal'));
+        }
+    });
+})();
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>
