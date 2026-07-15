@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt — TaskManager</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; background: #0a0e17; color: #c9d1d9; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .subtitle { font-size: 0.75rem; color: #6b7280; margin-bottom: 1.5rem; }
+        .gantt-wrap { overflow: auto; max-height: 700px; background: #161b22; border: 1px solid #30363d; border-radius: 0.75rem; }
+        .gantt-inner { display: flex; flex-direction: column; min-width: fit-content; }
+        .header-row { display: flex; border-bottom: 1px solid #30363d; position: sticky; top: 0; z-index: 10; background: #161b22; }
+        .label-col-header { width: 280px; flex-shrink: 0; padding: 0.625rem 1rem; border-right: 1px solid #30363d; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; }
+        .day-cell { flex-shrink: 0; width: 36px; text-align: center; border-right: 1px solid rgba(48,54,61,0.3); padding: 0.25rem 0; }
+        .day-cell.today { background: rgba(0,229,255,0.05); }
+        .month-label { font-size: 9px; color: #6b7280; }
+        .day-num { font-size: 10px; font-weight: 700; color: #6b7280; }
+        .today .day-num { color: #00e5ff; }
+        .task-row { display: flex; border-bottom: 1px solid rgba(48,54,61,0.3); }
+        .task-row:hover { background: rgba(22,27,34,0.8); }
+        .label-col { width: 280px; flex-shrink: 0; padding: 0.625rem 1rem; border-right: 1px solid #30363d; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .task-title { font-size: 0.75rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .timeline-col { flex: 1; position: relative; padding: 0.5rem 0; }
+        svg { display: block; }
+        .legend { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; padding-left: 0.5rem; }
+        .legend-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; }
+        .legend-item { display: flex; align-items: center; gap: 0.375rem; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .legend-text { font-size: 10px; color: #6b7280; text-transform: capitalize; }
+        @media print {
+            body { background: white !important; color: #1a2332 !important; }
+            .gantt-wrap { border-color: #ddd !important; background: white !important; max-height: none; }
+            .header-row, .label-col-header { background: white !important; border-color: #ddd !important; color: #666 !important; }
+            .task-title { color: #1a2332 !important; }
+            .day-cell { border-color: rgba(0,0,0,0.1) !important; }
+            .day-num { color: #666 !important; }
+            .today .day-num { color: #007acc !important; }
+            .legend-text { color: #666 !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>GANTT — TaskManager</h1>
+    <p class="subtitle">Generated {{ today_str }}</p>
+
+    <div class="gantt-wrap">
+        <div class="gantt-inner" id="gantt"></div>
+    </div>
+
+    <div class="legend">
+        <span class="legend-label">Status:</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#6b7280"></span><span class="legend-text">backlog</span></span>
+        <span class="legend-item"><span class="legend-dot" style="background:#00e5ff"></span><span class="legend-text">active</span></span>
+        <span class="legend-item"><span class="legend-dot" style="background:#7c4dff"></span><span class="legend-text">delegated</span></span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ff5252"></span><span class="legend-text">blocked</span></span>
+        <span class="legend-item"><span class="legend-dot" style="background:#69f0ae"></span><span class="legend-text">done</span></span>
+    </div>
+</div>
+
+<script>
+const DAY_WIDTH = 36;
+const taskData = {{ task_data | tojson }};
+const projectData = {{ project_data | tojson }};
+const filterProject = '{{ project_id }}';
+
+const statusColor = {
+    backlog: '#6b7280', active: '#00e5ff', delegated: '#7c4dff', blocked: '#ff5252', done: '#69f0ae'
+};
+
+function renderGantt() {
+    let tasks = taskData;
+    if (filterProject) {
+        tasks = tasks.filter(t => t.project_id == filterProject);
+    }
+    tasks.sort((a, b) => a.due_date.localeCompare(b.due_date));
+
+    if (tasks.length === 0) {
+        document.getElementById('gantt').innerHTML = '<p style="padding:3rem;text-align:center;color:#6b7280;">No tasks with due dates</p>';
+        return;
+    }
+
+    // Compute date range
+    const allDates = tasks.flatMap(t => [t.due_date, t.start_date || t.due_date].filter(Boolean));
+    let start = new Date(Math.min(...allDates));
+    start.setDate(start.getDate() - start.getDay()); // round to Monday
+    let end = new Date(Math.max(...tasks.map(t => t.due_date)));
+    end.setDate(end.getDate() + (6 - end.getDay())); // round to Sunday
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push({
+            month: d.toLocaleDateString('en-US', { month: 'short' }),
+            dayNum: d.getDate(),
+            isToday: d.toDateString() === today.toDateString(),
+        });
+    }
+
+    const timelineWidth = days.length * DAY_WIDTH;
+    const totalWidth = 280 + timelineWidth;
+
+    // Today line X position
+    const diffDaysToday = Math.round((today - start) / (1000*60*60*24));
+    const todayX = diffDaysToday * DAY_WIDTH + DAY_WIDTH / 2;
+
+    let html = '';
+
+    // Header row
+    html += '<div class="header-row">';
+    html += '<div class="label-col-header">Task</div>';
+    days.forEach(day => {
+        html += `<div class="day-cell${day.isToday ? ' today' : ''}">`;
+        html += `<span class="month-label">${day.month}</span>`;
+        html += `<span class="day-num">${day.dayNum}</span>`;
+        html += '</div>';
+    });
+    html += '</div>';
+
+    // Task rows
+    tasks.forEach(task => {
+        const due = new Date(task.due_date);
+        const taskStart = new Date(task.start_date || task.due_date);
+        const diffDaysDue = Math.round((due - start) / (1000*60*60*24));
+        const barX = diffDaysDue * DAY_WIDTH + 2;
+        const spanDays = Math.round((due - taskStart) / (1000*60*60*24)) + 1;
+        const barWidth = Math.max(spanDays * DAY_WIDTH - 4, 16);
+        const color = statusColor[task.status] || '#6b7280';
+
+        html += '<div class="task-row">';
+        html += `<div class="label-col">`;
+        html += `<span class="status-dot" style="background:${color}"></span>`;
+        html += `<span class="task-title">${escapeHtml(task.title)}</span>`;
+        html += '</div>';
+        html += `<div class="timeline-col">`;
+        html += `<svg width="${timelineWidth}" height="36">`;
+        // Today line
+        if (todayX >= 0 && todayX <= timelineWidth) {
+            html += `<line x1="${todayX}" y1="0" x2="${todayX}" y2="36" stroke="#00e5ff40" stroke-width="1" stroke-dasharray="3,3"/>`;
+        }
+        // Bar
+        html += `<rect x="${barX}" y="8" width="${barWidth}" height="20" rx="4" fill="${color}30" stroke="${color}" stroke-width="1.5"/>`;
+        // Label on bar
+        html += `<text x="${barX + barWidth/2}" y="22" text-anchor="middle" fill="#c9d1d9" font-size="9">${task.start_date || task.due_date} → ${task.due_date}</text>`;
+        // Recurrence indicator
+        if (task.recurrence) {
+            html += `<text x="${barX + barWidth - 2}" y="14" text-anchor="end" fill="#00e5ff" font-size="10">↻</text>`;
+        }
+        html += '</svg></div>';
+        html += '</div>';
+    });
+
+    document.getElementById('gantt').innerHTML = html;
+}
+
+function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+}
+
+renderGantt();
+</script>
+</body>
+</html>

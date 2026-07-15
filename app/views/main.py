@@ -231,6 +231,33 @@ def gantt():
     )
 
 
+@main_bp.route("/gantt/export")
+def gantt_export():
+    """Generate a standalone HTML page with the Gantt chart — no app context needed."""
+    from datetime import date as date_type
+
+    project_id = request.args.get("project_id", "").strip()
+    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    projects = Project.query.order_by(Project.name).all()
+
+    task_data = []
+    for t in tasks:
+        task_data.append({"id": t.id, "title": t.title, "status": t.status,
+                          "start_date": (t.start_date or t.created_at.date()).isoformat(),
+                          "due_date": t.due_date.isoformat() if t.due_date else None,
+                          "project_id": t.project_id, "recurrence": t.recurrence or None})
+
+    project_data = [{"id": p.id, "name": p.name} for p in projects]
+
+    return render_template(
+        "gantt_export.html",
+        task_data=task_data,
+        project_data=project_data,
+        project_id=project_id,
+        today_str=date_type.today().isoformat(),
+    )
+
+
 @main_bp.route("/api/calendar/events")
 def calendar_events():
     tasks = Task.query.filter(Task.due_date.isnot(None)).all()
