@@ -99,7 +99,14 @@ def list_tasks():
     date_to = request.args.get("date_to", "").strip()
 
     query, sort_field, sort_order = build_task_query()
-    tasks = query.all()
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
+    if per_page < 1 or per_page > 200:
+        per_page = 50
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    tasks = pagination.items
 
     # Gather filter options
     projects = Project.query.order_by(Project.name).all()
@@ -122,6 +129,7 @@ def list_tasks():
     return render_template(
         "tasks/list.html",
         tasks=tasks,
+        pagination=pagination,
         projects=projects,
         statuses=STATUSES,
         priorities=PRIORITIES,

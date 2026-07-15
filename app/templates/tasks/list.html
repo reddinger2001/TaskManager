@@ -284,5 +284,36 @@
 </div>
 {% endif %}
 
+{% if pagination.pages > 1 %}
+<!-- Pagination -->
+<div class="flex items-center justify-between px-4 py-3 border-t border-border">
+    <span class="text-xs mono text-muted">
+        Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} tasks)
+    </span>
+    <div class="flex items-center gap-1">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, **request.args) }}"
+           class="px-2 py-1 text-xs mono border border-border rounded hover:text-text transition-colors">← Prev</a>
+        {% endif %}
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                {% if p == pagination.page %}
+                <span class="px-2 py-1 text-xs mono bg-accent/20 text-accent rounded">{{ p }}</span>
+                {% else %}
+                <a href="{{ url_for('tasks.list_tasks', page=p, **request.args) }}"
+                   class="px-2 py-1 text-xs mono border border-border rounded hover:text-text transition-colors">{{ p }}</a>
+                {% endif %}
+            {% else %}
+                <span class="px-1 text-muted">…</span>
+            {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <a href="{{ url_for('tasks.list_tasks', page=pagination.next_num, **request.args) }}"
+           class="px-2 py-1 text-xs mono border border-border rounded hover:text-text transition-colors">Next →</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 </div>
 {% endblock %}
