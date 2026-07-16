@@ -21,11 +21,15 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
 
+    # Ensure instance directory exists before touching the DB
+    import os
+    os.makedirs(app.instance_path, exist_ok=True)
+
     # Initialize database and extensions
     init_extensions(app)
 
-    # CSRF protection — exclude PATCH endpoints (JSON API calls from Alpine.js)
-    app.config["WTF_CSRF_EXEMPT_METHODS"] = ["PATCH", "GET", "OPTIONS", "HEAD"]
+    # CSRF protection — only protect POST and DELETE (PATCH is used by Alpine.js API calls)
+    app.config["WTF_CSRF_METHODS"] = {"POST", "DELETE"}
     csrf.init_app(app)
 
     # Register FTS5 hooks (always on — keeps keyword search index in sync)
@@ -48,5 +52,13 @@ def create_app():
 
     from app.views.tasks import tasks_bp
     app.register_blueprint(tasks_bp)
+
+    # In-app help system
+    from app.views.help import help_bp
+    app.register_blueprint(help_bp)
+
+    # Seed tutorial data on first run (fresh database only)
+    from app.services.seed import seed_if_empty
+    seed_if_empty(app)
 
     return app
