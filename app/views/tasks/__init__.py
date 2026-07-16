@@ -218,15 +218,14 @@ def _find_related_captures(query_text, exclude_ids=None, limit=5):
     scoped to inbox items (no project assigned) and excluding given IDs.
     Falls back to empty list if FTS5 fails.
     """
-    from app.extensions import get_vec_connection
+    from app.models import db
 
     try:
-        conn = get_vec_connection()
+        conn = db.engine.raw_connection()
         rows = conn.execute(
             "SELECT task_id FROM search_index WHERE search_index MATCH ? ORDER BY rank LIMIT ?",
             (query_text, limit),
         ).fetchall()
-        conn.close()
 
         if not rows:
             return []

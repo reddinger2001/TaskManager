@@ -78,11 +78,11 @@ class TestKeywordSearch:
         assert resp.status_code == 200
         assert b"Found" in resp.data and b"results" in resp.data
 
-    def test_search_has_semantic_toggle(self, client, populated_db):
-        """Search page has a semantic search toggle checkbox."""
+    def test_search_is_keyword_only(self, client, populated_db):
+        """Search page has no semantic toggle — FTS5 keyword search only."""
         resp = client.get("/search?q=SOC")
         assert resp.status_code == 200
-        assert b"Semantic" in resp.data
+        assert b"Semantic" not in resp.data
 
     def test_search_shows_section_headers(self, client, populated_db):
         """Search results are grouped by type (Tasks, Projects, Logs)."""

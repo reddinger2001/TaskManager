@@ -9,13 +9,6 @@
         <p class="text-sm mono text-muted">
             Found <span class="text-accent">{{ total }}</span> results for "<span class="text-text">{{ q }}</span>"
         </p>
-        <label class="flex items-center gap-2 text-xs mono cursor-pointer select-none">
-            <input type="checkbox" value="1"
-                   {% if use_semantic %}checked{% endif %}
-                   onchange="var s=this.checked?'true':'false'; var u=new URL(window.location); u.searchParams.set('semantic',s); window.location=u.toString();"
-                   class="rounded border-border bg-surface text-accent focus:ring-accent/30">
-            <span class="text-muted">Semantic</span>
-        </label>
     </div>
     {% endif %}
 </div>
@@ -62,11 +55,6 @@
                         {% endif %}
                         {% if t.due_date %}<span>Due {{ t.due_date }}</span>{% endif %}
                         {% if t.project %}<span>{{ t.project.name }}</span>{% endif %}
-                        {% if use_semantic and task_scores.get(t.id) is not none %}
-                        <span class="ml-auto px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
-                            {{ "%.0f"|format(task_scores[t.id] * 100) }}% relevant
-                        </span>
-                        {% endif %}
                     </div>
                 </div>
             </div>
