@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    pre.report {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 0.8rem;
+        line-height: 1.6;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold mono tracking-wider text-text">REPORT</h2>
+    <div class="flex items-center gap-2">
+        <button onclick="navigator.clipboard.writeText(document.querySelector('pre.report').textContent); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)"
+                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+            Copy
+        </button>
+        <a href="/gantt"
+           class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors">
+            ← Gantt Chart
+        </a>
+    </div>
+</div>
+
+<pre class="report">{{ content }}</pre>
+{% endblock %}
