@@ -15,52 +15,96 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.route("/")
 def index():
-    # Single query for all non-done tasks — split in Python
+    from datetime import timedelta
+    today = date.today()
+    week_end = today + timedelta(days=7 - today.weekday())  # end of current week
+
+    # Single query for all non-done tasks
     tasks = Task.query.filter(Task.status != "done").all()
 
-    # On Fire: P0 tasks + all blocked tasks
-    on_fire = sorted(
-        [t for t in tasks if t.priority == "P0" or t.status == "blocked"],
-        key=lambda t: (0 if t.priority == "P0" else 1, -t.created_at.timestamp()),
+    # Big numbers
+    total_open = len(tasks)
+    active_count = len([t for t in tasks if t.status == "active"])
+    on_fire_count = len([t for t in tasks if t.priority == "P0" or t.status == "blocked"])
+    blocked_count = len([t for t in tasks if t.status == "blocked"])
+    done_count = Task.query.filter(Task.status == "done").count()
+
+    # Priority counts
+    priority_counts = {}
+    for p in ["P0", "P1", "P2", "P3"]:
+        priority_counts[p] = len([t for t in tasks if t.priority == p])
+    total_priority = sum(priority_counts.values()) or 1  # avoid div by zero
+
+    # Overdue
+    overdue = sorted(
+        [t for t in tasks if t.due_date and t.due_date < today],
+        key=lambda t: t.due_date,
     )
 
-    # Delegated: tasks with status=delegated, grouped by assignee
-    delegated = sorted(
-        [t for t in tasks if t.status == "delegated" and t.assignee],
-        key=lambda t: (t.assignee or "", -t.created_at.timestamp()),
-    )
-
-    # Active: tasks with status=active
-    active = sorted(
+    # Currently active
+    currently_active = sorted(
         [t for t in tasks if t.status == "active"],
         key=lambda t: -t.created_at.timestamp(),
     )
 
-    # Backlog: tasks with status=backlog, sorted by priority then due date
-    priority_order = {"P1": 0, "P2": 1}
-    far_future = date(9999, 9, 9)
-    backlog = sorted(
-        [t for t in tasks if t.status == "backlog"],
-        key=lambda t: (priority_order.get(t.priority, 2), t.due_date or far_future),
+    # Due this week
+    due_this_week = sorted(
+        [t for t in tasks if t.due_date and today <= t.due_date <= week_end and t.status != "done"],
+        key=lambda t: t.due_date,
     )
 
-    # Inbox: tasks with no project assigned
+    # Inbox
     inbox = sorted(
         [t for t in tasks if t.project_id is None],
         key=lambda t: -t.created_at.timestamp(),
     )
 
-    # Projects for the capture modal dropdown
-    projects = db.session.query(Project).order_by(Project.name).all()
+    # Delegated
+    delegated = sorted(
+        [t for t in tasks if t.status == "delegated" and t.assignee],
+        key=lambda t: (t.assignee or "", -t.created_at.timestamp()),
+    )
+
+    # Recently done
+    done_tasks = Task.query.filter(Task.status == "done").order_by(Task.completed_at.desc()).limit(5).all()
+
+    # Project health
+    projects_all = db.session.query(Project).order_by(Project.name).all()
+    project_health = []
+    for proj in projects_all:
+        proj_tasks = Task.query.filter(Task.project_id == proj.id).all()
+        done = len([t for t in proj_tasks if t.status == "done"])
+        total = len(proj_tasks)
+        pct = round(done / total * 100, 1) if total > 0 else 0
+        next_due = None
+        for t in sorted([t for t in proj_tasks if t.due_date and t.status != "done"], key=lambda x: x.due_date):
+            next_due = t.due_date
+            break
+        project_health.append({
+            "project": proj,
+            "done": done,
+            "total": total,
+            "pct": pct,
+            "next_due": next_due,
+        })
 
     return render_template(
         "index.html",
-        on_fire=on_fire,
-        delegated=delegated,
-        active=active,
-        backlog=backlog,
+        today=today,
+        total_open=total_open,
+        active_count=active_count,
+        on_fire_count=on_fire_count,
+        blocked_count=blocked_count,
+        done_count=done_count,
+        priority_counts=priority_counts,
+        overdue=overdue,
+        currently_active=currently_active,
+        due_this_week=due_this_week,
         inbox=inbox,
-        projects=projects,
+        delegated=delegated,
+        done_tasks=done_tasks,
+        project_health=project_health,
+        projects=projects_all,
     )
 
 
