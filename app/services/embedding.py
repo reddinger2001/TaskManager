@@ -160,7 +160,26 @@ def hybrid_search(query_text: str, limit: int = 50, semantic_weight: float = 0.6
     # --- Semantic search via sqlite-vec ---
     semantic_map = {}  # task_id -> normalized_score (0-1)
     try:
-        vec = embed(query_text)
+        # Use signal alarm to prevent hanging if model download is slow/unavailable
+        import signal
+        class EmbedTimeout(Exception):
+            pass
+        def _timeout_handler(signum, frame):
+            raise EmbedTimeout("Embedding timed out (model not cached?)")
+        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(10)  # 10 second timeout for embedding (model download on first run)
+        try:
+            vec = embed(query_text)
+        except EmbedTimeout:
+            logger.warning("Embedding timed out — falling back to keyword-only search")
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+
+        if 'vec' not in dir():
+            # Embedding timed out, skip semantic portion
+            return [(tid, keyword_map[tid]) for tid in keyword_map]
+
         vec_json = json.dumps(vec)
         conn = get_vec_connection()
         rows = conn.execute(

@@ -200,6 +200,7 @@
                     {% for task in delegated %}
                         {% if task.assignee != ns.current_assignee %}
                             {% if ns.current_assignee %}</div>{% endif %}
+                            <div>
                             <div class="flex items-center gap-2 mb-1"><span class="w-5 h-5 rounded-full bg-accent2/20 flex items-center justify-center text-[10px] mono font-bold text-accent2">{{ task.assignee[0].upper() }}</span><span class="text-[10px] mono text-muted">{{ task.assignee }}</span></div>
                             <div class="space-y-1">
                             {% set ns.current_assignee = task.assignee %}
@@ -208,7 +209,7 @@
                             <h4 class="text-xs text-text font-medium">{{ task.title }}</h4>
                         </a>
                     {% endfor %}
-                </div>
+                    </div></div>
                 {% else %}
                 <div class="border border-dashed border-border/50 rounded-lg p-5 text-center">
                     <p class="text-xs text-muted mono">Nothing delegated</p>
