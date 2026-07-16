@@ -1,0 +1,32 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Help' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-2">HELP</h1>
+<p class="text-sm text-muted mb-6">Welcome to TaskManager. Choose a topic below or use the sidebar to navigate.</p>
+
+<div class="grid grid-cols-2 gap-4">
+    {% for slug, title in pages.items() %}
+    <a href="/help/{{ slug }}" class="block bg-surface border border-border rounded-lg p-5 no-underline hover:border-accent/30 transition-colors">
+        <h3 class="text-sm font-bold mono text-text mb-1">{{ title }}</h3>
+        <p class="text-xs text-muted">
+            {% if slug == 'getting-started' %}First steps — capture, triage, and organize your tasks{% endif %}
+            {% if slug == 'dashboard' %}Understanding the pulse-check dashboard layout{% endif %}
+            {% if slug == 'tasks' %}Task statuses, priorities, and how to manage them{% endif %}
+            {% if slug == 'projects' %}Organizing tasks into projects with progress tracking{% endif %}
+            {% if slug == 'search' %}Finding tasks with keyword and semantic search{% endif %}
+            {% if slug == 'dependencies' %}Linking tasks together with blocking relationships{% endif %}
+            {% if slug == 'backup-restore' %}Exporting and importing your database{% endif %}
+        </p>
+    </a>
+    {% endfor %}
+</div>
+
+<div class="mt-8 bg-surface border border-border rounded-lg p-5">
+    <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent mb-2">Keyboard Shortcuts</h3>
+    <dl class="space-y-1.5 text-xs mono">
+        <div class="flex items-center justify-between"><dt class="text-muted">Ctrl+K or /</dt><dd class="text-text">Open quick-capture modal</dd></div>
+        <div class="flex items-center justify-between"><dt class="text-muted">Esc</dt><dd class="text-text">Close modal</dd></div>
+    </dl>
+</div>
+{% endblock %}

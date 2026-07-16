@@ -1,0 +1,75 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Tasks & Statuses' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">TASKS & STATUSES</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Statuses</h2>
+<p class="text-sm text-muted leading-relaxed mb-3">Each task has one status. The workflow flows left to right:</p>
+
+<div class="flex items-center gap-2 mb-4 flex-wrap">
+    <span class="px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs mono text-yellow-400">Inbox</span>
+    <span class="text-muted">→</span>
+    <span class="px-3 py-1.5 rounded-lg bg-gray-500/10 border border-gray-500/30 text-xs mono text-gray-400">Backlog</span>
+    <span class="text-muted">→</span>
+    <span class="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-xs mono text-accent">Active</span>
+    <span class="text-muted">→</span>
+    <span class="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-xs mono text-green-400">Done</span>
+</div>
+
+<table class="w-full text-xs mono mb-4">
+    <thead>
+        <tr class="text-muted border-b border-border">
+            <th class="text-left py-2 pr-4">Status</th>
+            <th class="text-left py-2">Meaning</th>
+        </tr>
+    </thead>
+    <tbody class="text-muted">
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-yellow-400">Inbox</td><td>Untriaged — captured but not yet organized</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-gray-400">Backlog</td><td>Planned but not started yet</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent">Active</td><td>Currently working on this right now</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-orange-400">Blocked</td><td>Can't proceed until something else is done</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent2">Delegated</td><td>Assigned to someone else</td></tr>
+        <tr><td class="py-2 pr-4 text-green-400">Done</td><td>Completed</td></tr>
+    </tbody>
+</table>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Priorities</h2>
+<table class="w-full text-xs mono mb-4">
+    <thead>
+        <tr class="text-muted border-b border-border">
+            <th class="text-left py-2 pr-4">Level</th>
+            <th class="text-left py-2">Meaning</th>
+        </tr>
+    </thead>
+    <tbody class="text-muted">
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-red-400">P0</td><td>On fire — do it now, everything else waits</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-amber-400">P1</td><td>High — important, schedule soon</td></tr>
+        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent">P2</td><td>Medium — normal work</td></tr>
+        <tr><td class="py-2 pr-4 text-green-400">P3</td><td>Low — nice to have, do when convenient</td></tr>
+    </tbody>
+</table>
+
+<div class="bg-surface border border-red-500/20 rounded-lg p-4 mb-4">
+    <p class="text-xs mono text-red-400"><strong>RULE OF THUMB:</strong> If everything is P0, nothing is P0. Use P0 only for actual fires. Most tasks should be P2.</p>
+</div>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Editing a Task</h2>
+<p class="text-sm text-muted leading-relaxed">Click any task to open the detail view. Changes save automatically as you type (via Alpine.js). Fields include:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text">Title</strong> — required, shown everywhere</li>
+    <li><strong class="text-text">Description</strong> — rich notes (Markdown is stored but not rendered)</li>
+    <li><strong class="text-text">Status</strong> — dropdown to change workflow state</li>
+    <li><strong class="text-text">Priority</strong> — P0 through P3 or none</li>
+    <li><strong class="text-text">Start Date / Due Date</strong> — optional date range</li>
+    <li><strong class="text-text">Assignee</strong> — name of the person responsible</li>
+    <li><strong class="text-text">Project</strong> — which project this belongs to (or Inbox)</li>
+    <li><strong class="text-text">Blocked By</strong> — dependency on another task</li>
+    <li><strong class="text-text">Tags</strong> — comma-separated keywords</li>
+    <li><strong class="text-text">Links</strong> — external URLs related to this task</li>
+</ul>
+
+</div>
+{% endblock %}

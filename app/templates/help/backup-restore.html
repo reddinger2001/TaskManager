@@ -1,0 +1,42 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Backup & Restore' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">BACKUP & RESTORE</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<p class="text-sm text-muted leading-relaxed mb-4">Your data lives in a single SQLite file. Backing up is as simple as copying that file.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Export</h2>
+<p class="text-sm text-muted leading-relaxed">Go to <a href="/settings" class="text-accent underline">Settings</a> and click <strong class="text-text">Download Database</strong>. This downloads the entire database as a <code class="bg-bg px-1.5 py-0.5 rounded text-xs mono text-accent">taskmanager.db</code> file.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Import</h2>
+<p class="text-sm text-muted leading-relaxed">On the Settings page, use the <strong class="text-text">Import Database</strong> section to upload a <code class="bg-bg px-1.5 py-0.5 rounded text-xs mono text-accent">.db</code> file. This <em>replaces</em> your current database.</p>
+<p class="text-sm text-muted leading-relaxed mt-2"><strong class="text-text text-red-400">Safety net:</strong> Before importing, the system automatically creates a backup of your current database with a timestamp. If the import fails, your data is restored from this safety backup.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Manual Backup</h2>
+<p class="text-sm text-muted leading-relaxed">The database file lives at:</p>
+<div class="bg-bg border border-border rounded-lg p-3 my-3">
+    <code class="text-xs mono text-accent">instance/taskmanager.db</code>
+</div>
+<p class="text-sm text-muted leading-relaxed">You can copy this file directly. On macOS/Linux:</p>
+<div class="bg-bg border border-border rounded-lg p-3 my-3">
+    <code class="text-xs mono text-accent">cp instance/taskmanager.db backups/backup-$(date +%Y%m%d).db</code>
+</div>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Migrating to Another Machine</h2>
+<p class="text-sm text-muted leading-relaxed">To move your data to another computer:</p>
+<ol class="text-sm text-muted leading-relaxed space-y-1 list-decimal ml-5">
+    <li>Export the database from Settings</li>
+    <li>Copy the file to the new machine</li>
+    <li>Place it at <code class="bg-bg px-1.5 py-0.5 rounded text-xs mono text-accent">instance/taskmanager.db</code></li>
+    <li>Start the app — your data is there</li>
+</ol>
+
+<div class="mt-6 bg-surface border border-border rounded-lg p-4">
+    <p class="text-xs mono text-muted"><strong>TIP:</strong> The database file is typically under 1MB for personal use. Even with thousands of tasks, it stays small.</p>
+</div>
+
+</div>
+{% endblock %}

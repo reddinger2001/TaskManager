@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Help — {{ active_title or 'TaskManager' }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-12 gap-6">
+
+    <!-- Sidebar Navigation -->
+    <div class="col-span-3">
+        <div class="bg-panel border border-border rounded-xl p-4 sticky top-[70px]">
+            <h3 class="text-[10px] font-bold mono uppercase tracking-wider text-muted mb-3">Help Topics</h3>
+            <nav class="space-y-1">
+                {% for slug, title in pages.items() %}
+                <a href="/help/{{ slug }}"
+                   class="block px-3 py-2 text-xs mono rounded-lg transition-colors no-underline
+                          {% if active_page == slug %}bg-accent/10 text-accent border-l-2 border-accent{% else %}text-muted hover:text-text hover:bg-surface{% endif %}">
+                    {{ title }}
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="col-span-9">
+        <div class="bg-panel border border-border rounded-xl p-8">
+            {% block help_content %}{% endblock %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

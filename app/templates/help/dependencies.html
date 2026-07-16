@@ -1,0 +1,29 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Dependencies' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">DEPENDENCIES</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<p class="text-sm text-muted leading-relaxed mb-4">Task dependencies let you link tasks together so you can see what's blocking what.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">How It Works</h2>
+<p class="text-sm text-muted leading-relaxed">In the task detail view, there's a <strong class="text-text">"Blocked By"</strong> dropdown. Select another task to create a dependency:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li>The dependent task shows a <strong class="text-text text-orange-400">BLOCKED BY</strong> banner at the top</li>
+    <li>The blocking task shows a <strong class="text-text">BLOCKS (N)</strong> section listing what depends on it</li>
+    <li>When the blocker is marked Done, the banner shows <strong class="text-text text-green-400">(resolved)</strong></li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Circular Dependency Protection</h2>
+<p class="text-sm text-muted leading-relaxed">The system prevents circular references. If Task A depends on Task B, you cannot set Task B to depend on Task A — the change will be rejected.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">On the Dashboard</h2>
+<p class="text-sm text-muted leading-relaxed">Tasks that block other tasks show an <strong class="text-text">⏳ N</strong> badge on the dashboard, where N is the number of tasks waiting on it.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Deleting a Blocking Task</h2>
+<p class="text-sm text-muted leading-relaxed">If you delete the task that blocks something, the dependency is automatically removed (set to null). The dependent task is not deleted.</p>
+
+</div>
+{% endblock %}

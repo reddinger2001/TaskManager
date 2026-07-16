@@ -1,0 +1,29 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Projects' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">PROJECTS</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<p class="text-sm text-muted leading-relaxed mb-4">Projects group related tasks together. Tasks without a project go to the <strong class="text-text">Inbox</strong>.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Creating a Project</h2>
+<p class="text-sm text-muted leading-relaxed">Go to <a href="/projects" class="text-accent underline">Projects</a> and click the + button. Give it a name and optional description.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Project Health</h2>
+<p class="text-sm text-muted leading-relaxed">On the dashboard, each project gets a card showing:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text">Progress bar</strong> — percentage of tasks completed</li>
+    <li><strong class="text-text">Next due date</strong> — the earliest upcoming deadline in that project</li>
+    <li><strong class="text-text">Task count</strong> — done vs. total</li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Nested Projects</h2>
+<p class="text-sm text-muted leading-relaxed">Projects can have parent-child relationships. For example, "Q3 Planning" could be the parent of "Sprint 1", "Sprint 2", etc.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Project Board</h2>
+<p class="text-sm text-muted leading-relaxed">Click a project to see its tasks in a Kanban-style board view, grouped by status.</p>
+
+</div>
+{% endblock %}

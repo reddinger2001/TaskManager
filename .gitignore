@@ -26,3 +26,12 @@ instance/
 # Database (generated)
 *.db
 *.sqlite3
+
+# Distribution packages
+taskmanager-*.zip
+
+# Backups
+backups/
+
+# Prototypes (not needed in production)
+prototypes/

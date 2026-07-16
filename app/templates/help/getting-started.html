@@ -1,0 +1,46 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Getting Started' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">GETTING STARTED</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Step 1: Capture a Task</h2>
+<p class="text-sm text-muted leading-relaxed">The fastest way to add a task is the <strong class="text-text">quick-capture modal</strong>. Press <code class="bg-bg px-1.5 py-0.5 rounded text-xs mono text-accent">Ctrl+K</code> or <code class="bg-bg px-1.5 py-0.5 rounded text-xs mono text-accent">/</code> from anywhere in the app, type a title, and hit Enter.</p>
+<p class="text-sm text-muted leading-relaxed">Tasks land in your <strong class="text-text">Inbox</strong> — unorganized, no project, no priority. That's fine. The point is speed: get it out of your head first, organize later.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Step 2: Triage Your Inbox</h2>
+<p class="text-sm text-muted leading-relaxed">When you have a moment, click on inbox tasks to open the detail view. Here you can:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li>Assign it to a <strong class="text-text">Project</strong></li>
+    <li>Set a <strong class="text-text">Priority</strong> (P0–P3 or none)</li>
+    <li>Change the <strong class="text-text">Status</strong> (Backlog → Active → Done)</li>
+    <li>Add a <strong class="text-text">Due date</strong></li>
+    <li>Add <strong class="text-text">Tags</strong>, links, or a description</li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Step 3: Work Your System</h2>
+<p class="text-sm text-muted leading-relaxed">The workflow is simple:</p>
+<ol class="text-sm text-muted leading-relaxed space-y-1 list-decimal ml-5">
+    <li><strong class="text-text">Capture</strong> — anything that comes to mind goes in the Inbox</li>
+    <li><strong class="text-text">Triage</strong> — assign project, priority, and status</li>
+    <li><strong class="text-text">Process</strong> — move Backlog → Active when you're ready to work on it</li>
+    <li><strong class="text-text">Complete</strong> — mark as Done when finished</li>
+</ol>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">The Dashboard Is Your Pulse Check</h2>
+<p class="text-sm text-muted leading-relaxed">Open the dashboard and in 5 seconds you should know:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li>Are there any fires (P0 tasks)?</li>
+    <li>What am I actively working on?</li>
+    <li>Is anything overdue?</li>
+    <li>How are my projects doing?</li>
+</ul>
+
+<div class="mt-6 bg-surface border border-accent/20 rounded-lg p-4">
+    <p class="text-xs mono text-accent"><strong>TIP:</strong> The big number cards at the top of the dashboard are clickable. Click "Active" to see all active tasks, click "On Fire" to filter by P0, etc.</p>
+</div>
+
+</div>
+{% endblock %}

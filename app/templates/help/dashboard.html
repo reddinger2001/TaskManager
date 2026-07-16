@@ -1,0 +1,49 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Dashboard' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">DASHBOARD</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<p class="text-sm text-muted leading-relaxed mb-6">The dashboard is designed for a <strong class="text-text">5-second pulse check</strong>. Read it top to bottom:</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">1. Big Numbers (Top Row)</h2>
+<p class="text-sm text-muted leading-relaxed">Five cards showing your task counts at a glance:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text">Open</strong> — total tasks not yet done</li>
+    <li><strong class="text-text">Active</strong> — tasks you're currently working on</li>
+    <li><strong class="text-text">On Fire</strong> — P0 priority tasks and blocked tasks</li>
+    <li><strong class="text-text">Blocked</strong> — tasks with status "blocked"</li>
+    <li><strong class="text-text">Done</strong> — completed tasks</li>
+</ul>
+<p class="text-sm text-muted leading-relaxed mt-2"><strong class="text-text">Each card is clickable</strong> — it takes you to the Tasks page filtered by that category.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">2. Priority Strip</h2>
+<p class="text-sm text-muted leading-relaxed">Thin horizontal bars showing the distribution of P0 through P3 tasks. If P0 or P1 is growing, you need attention there.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">3. Project Health Cards</h2>
+<p class="text-sm text-muted leading-relaxed">One card per project showing completion percentage and the next upcoming due date. Click a card to open that project.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">4. Attention Panel (Left)</h2>
+<p class="text-sm text-muted leading-relaxed">Three sections, in order of urgency:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text text-red-400">Overdue / At Risk</strong> — tasks past their due date</li>
+    <li><strong class="text-text text-accent">Currently Active</strong> — what you're working on right now, with checkboxes to complete</li>
+    <li><strong class="text-text text-amber-400">Due This Week</strong> — upcoming deadlines</li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">5. Status Panel (Right)</h2>
+<p class="text-sm text-muted leading-relaxed">Three smaller sections:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text">Inbox</strong> — untriaged tasks with no project</li>
+    <li><strong class="text-text text-accent2">Delegated</strong> — tasks assigned to others</li>
+    <li><strong class="text-text text-green-400">Recently Done</strong> — recently completed tasks</li>
+</ul>
+
+<div class="mt-6 bg-surface border border-green-500/20 rounded-lg p-4">
+    <p class="text-xs mono text-green-400"><strong>GREEN MEANS GOOD:</strong> When a count is 0 (no fires, no blocks, empty inbox), it turns green with a checkmark. The goal is all green.</p>
+</div>
+
+</div>
+{% endblock %}
