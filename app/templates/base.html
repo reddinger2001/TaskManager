@@ -67,6 +67,7 @@
                 </h1>
                 <nav class="flex items-center gap-1">
                     <a href="/" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors {% if request.endpoint == 'main.index' %}text-accent border-b-2 border-accent{% endif %}">Dashboard</a>
+                    <a href="/tasks" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors {% if request.endpoint == 'tasks.list' %}text-accent border-b-2 border-accent{% endif %}">Tasks</a>
                     <a href="/board" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors {% if request.endpoint == 'main.board' %}text-accent border-b-2 border-accent{% endif %}">Board</a>
                     <a href="/projects" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Projects</a>
                     <a href="/calendar" class="px-3 py-1.5 text-xs font-medium tracking-wider mono uppercase text-muted hover:text-text transition-colors">Calendar</a>
@@ -74,6 +75,8 @@
                 </nav>
             </div>
             <div class="flex items-center gap-4">
+                <a href="/help/" class="px-2 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted hover:text-text transition-colors">Help</a>
+                <a href="/settings" class="px-2 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted hover:text-text transition-colors">Settings</a>
                 <form action="/search" method="get" class="relative">
                     <input type="text" name="q" placeholder="Search..." class="w-56 pl-8 pr-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
                     <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -157,5 +160,85 @@
 })();
 </script>
 {% block extra_scripts %}{% endblock %}
+
+<!-- New Task Modal -->
+<div x-data="{ showModal: false }" @open-modal.window="showModal = true">
+<div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showModal = false">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-bg/80 backdrop-blur-sm" @click="showModal = false"></div>
+
+        <div class="relative bg-surface rounded-xl border border-border w-full max-w-lg glow-accent">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 class="text-sm font-bold mono uppercase tracking-widest text-accent">New</h2>
+                <button @click="showModal = false" class="text-muted hover:text-text transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form action="/tasks/new" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Title <span class="text-red-400">*</span></label>
+                    <input type="text" name="title" required placeholder="What's on your mind?" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Description</label>
+                    <textarea name="description" rows="3" placeholder="Optional details..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Status</label>
+                        <select name="status" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="backlog">Backlog</option>
+                            <option value="active">Active</option>
+                            <option value="delegated">Delegated</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Priority</label>
+                        <select name="priority" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                            <option value="">— None —</option>
+                            <option value="P0">P0 — Critical</option>
+                            <option value="P1">P1 — High</option>
+                            <option value="P2">P2 — Normal</option>
+                            <option value="P3">P3 — Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Due Date</label>
+                        <input type="date" name="due_date" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Assignee</label>
+                        <input type="text" name="assignee" placeholder="Name..." class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5">Project</label>
+                    <select name="project_id" class="w-full px-3 py-2.5 text-sm bg-bg border border-border rounded-lg text-text focus:outline-none focus:border-accent/40 transition-colors">
+                        <option value="">— None — (Inbox)</option>
+                        {% for project in projects if projects is defined %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border">
+                    <button type="button" @click="showModal = false" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-muted bg-panel rounded-lg hover:text-text transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-xs mono uppercase tracking-wider text-bg bg-accent rounded-lg hover:bg-cyan-300 transition-colors">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
 </body>
 </html>
