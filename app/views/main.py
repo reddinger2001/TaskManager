@@ -273,6 +273,7 @@ def gantt():
         task_data=task_data,
         projects=projects,
         project_id=project_id,
+        today_str=date.today().isoformat(),
     )
 
 
@@ -300,6 +301,55 @@ def gantt_export():
         project_data=project_data,
         project_id=project_id,
         today_str=date_type.today().isoformat(),
+    )
+
+
+@main_bp.route("/gantt/report")
+def gantt_report():
+    """Generate a markdown task report."""
+    from datetime import date as date_type
+    project_id = request.args.get("project_id", "").strip()
+    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    if project_id:
+        tasks = [t for t in tasks if t.project_id == int(project_id)]
+
+    today = date_type.today()
+    lines = [f"# Task Report — {today.isoformat()}", ""]
+
+    overdue = [t for t in tasks if t.due_date < today and t.status != "done"]
+    active = [t for t in tasks if t.status == "active"]
+    backlog = [t for t in tasks if t.status == "backlog"]
+    done = [t for t in tasks if t.status == "done"]
+
+    if overdue:
+        lines.append("## Overdue")
+        for t in overdue:
+            days_left = (t.due_date - today).days
+            lines.append(f"- **{t.title}** — {t.due_date.isoformat()} ({abs(days_left)} days overdue) [{t.status}] {t.priority or 'P-'}")
+        lines.append("")
+
+    if active:
+        lines.append("## Active")
+        for t in active:
+            lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}")
+        lines.append("")
+
+    if backlog:
+        lines.append("## Backlog")
+        for t in backlog:
+            lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}")
+        lines.append("")
+
+    if done:
+        lines.append("## Done")
+        for t in done:
+            lines.append(f"- ~~{t.title}~~ — due {t.due_date.isoformat() if t.due_date else 'N/A'}")
+        lines.append("")
+
+    return render_template(
+        "gantt_report.html",
+        content="\n".join(lines),
+        title=f"Task Report — {today.isoformat()}",
     )
 
 
