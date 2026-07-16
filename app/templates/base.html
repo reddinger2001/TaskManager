@@ -6,20 +6,34 @@
     <title>{% block title %}TaskManager{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root, [data-theme="dark"] {
+            --bg: #0a0e17; --surface: #0d1220; --panel: #111827;
+            --border: #1a2332; --text: #c8d6e5; --muted: #4a5568;
+        }
+        [data-theme="medium"] {
+            --bg: #1a1f2e; --surface: #1e2438; --panel: #232b3f;
+            --border: #333b50; --text: #dce5ef; --muted: #6b7a90;
+        }
+        [data-theme="light"] {
+            --bg: #f4f6f9; --surface: #ffffff; --panel: #e8ecf1;
+            --border: #dfe3ea; --text: #1a202c; --muted: #718096;
+        }
+    </style>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        bg: '#0a0e17',
-                        surface: '#0d1220',
-                        panel: '#111827',
-                        border: '#1a2332',
+                        bg: 'var(--bg)',
+                        surface: 'var(--surface)',
+                        panel: 'var(--panel)',
+                        border: 'var(--border)',
                         accent: '#00e5ff',
                         accent2: '#7c4dff',
                         dim: '#3a4a5c',
-                        text: '#c8d6e5',
-                        muted: '#4a5568',
+                        text: 'var(--text)',
+                        muted: 'var(--muted)',
                     },
                     fontFamily: {
                         mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
@@ -28,6 +42,27 @@
                 }
             }
         }
+    </script>
+    <script>
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('taskmanager-theme', theme);
+            // Update active button state
+            ['dark','medium','light'].forEach(function(t) {
+                var btn = document.getElementById('theme-' + t + '-btn');
+                if (!btn) return;
+                if (t === theme) {
+                    btn.classList.add('ring-2', 'ring-accent/50');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-accent/50');
+                }
+            });
+        }
+        // Load saved theme on page load
+        (function() {
+            var saved = localStorage.getItem('taskmanager-theme') || 'dark';
+            applyTheme(saved);
+        })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -55,7 +90,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-bg text-text min-h-screen">
+<body class="bg-bg text-text min-h-screen" x-data="{ showModal: false }" @open-modal.window="showModal = true">
 
 <!-- Header -->
 <header class="border-b border-border sticky top-0 z-40 bg-bg/90 backdrop-blur-md">
@@ -162,7 +197,6 @@
 {% block extra_scripts %}{% endblock %}
 
 <!-- New Task Modal -->
-<div x-data="{ showModal: false }" @open-modal.window="showModal = true">
 <div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showModal = false">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="fixed inset-0 bg-bg/80 backdrop-blur-sm" @click="showModal = false"></div>
@@ -237,7 +271,6 @@
             </form>
         </div>
     </div>
-</div>
 </div>
 
 </body>
