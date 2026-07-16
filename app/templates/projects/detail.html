@@ -161,7 +161,7 @@
 {% if tasks %}
 <div class="space-y-2">
     {% for t in tasks %}
-    <div class="bg-panel border border-border rounded-lg px-4 py-3 flex items-center gap-3 card-hover">
+    <a href="/tasks/{{ t.id }}" class="bg-panel border border-border rounded-lg px-4 py-3 flex items-center gap-3 card-hover no-underline">
         <!-- Status dot -->
         <span class="w-2 h-2 rounded-full flex-shrink-0"
               style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
@@ -181,7 +181,7 @@
         {% if t.due_date %}
         <span class="text-[10px] mono ml-auto{% if t.due_date < today_date and t.status != 'done' %} text-red-400 font-bold{% else %} text-muted{% endif %}">{{ t.due_date }}</span>
         {% endif %}
-    </div>
+    </a>
     {% endfor %}
 </div>
 {% else %}

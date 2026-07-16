@@ -12,6 +12,15 @@
     .border-border { border-color: #ddd !important; }
     h2 { color: #0a0e17 !important; }
     .fc-event { border: 1px solid #333 !important; }
+    /* Force scrollable Gantt to expand full width for printing */
+    #timeline-scroll {
+        overflow-x: visible !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+    #timeline-scroll > div {
+        min-width: 100% !important;
+    }
 }
 </style>
 {% endblock %}
@@ -30,15 +39,10 @@
             <option value="{{ p.id }}"{% if project_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
             {% endfor %}
         </select>
-        <a href="/gantt/export?{{ request.query_string.decode() }}"
-           target="_blank"
+        <a href="/gantt/report?{{ request.query_string.decode() }}"
            class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
-            Export HTML
+            Report
         </a>
-        <button onclick="window.print()"
-                class="px-3 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted border border-border rounded hover:text-text transition-colors no-print">
-            Print PDF
-        </button>
     </div>
 </div>
 
@@ -61,7 +65,7 @@
                         <div class="flex-shrink-0 text-center border-r border-border/30"
                              :style="'width: ' + dayWidth + 'px'"
                              :class="day.isToday ? 'bg-accent/5' : ''">
-                            <div class="py-1">
+                            <div class="py-1 flex flex-col items-center gap-0.5">
                                 <span class="text-[9px] mono text-muted" x-text="day.month"></span>
                                 <span class="text-[10px] mono font-bold" :class="day.isToday ? 'text-accent' : 'text-muted'" x-text="day.dayNum"></span>
                             </div>
@@ -135,6 +139,7 @@
 <script>
 function gantt() {
     return {
+        today: new Date('{{ today_str }}'),
         filterProject: '{{ project_id }}',
         dayWidth: 36,
 
@@ -168,9 +173,10 @@ function gantt() {
         get days() {
             const days = [];
             const start = new Date(this.startDate);
-            const today = new Date(); today.setHours(0, 0, 0, 0);
             for (let d = new Date(start); d <= this.endDate; d.setDate(d.getDate() + 1)) {
-                const isToday = d.toDateString() === today.toDateString();
+                const isToday = d.getFullYear() === this.today.getFullYear() &&
+                                d.getMonth() === this.today.getMonth() &&
+                                d.getDate() === this.today.getDate();
                 days.push({
                     key: d.toISOString(),
                     month: d.toLocaleDateString('en-US', { month: 'short' }),
@@ -186,9 +192,8 @@ function gantt() {
         },
 
         get todayX() {
-            const today = new Date(); today.setHours(0, 0, 0, 0);
             const start = new Date(this.startDate);
-            const diffDays = Math.round((today - start) / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round((this.today - start) / (1000 * 60 * 60 * 24));
             return diffDays * this.dayWidth + this.dayWidth / 2;
         },
 

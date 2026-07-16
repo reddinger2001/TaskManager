@@ -255,6 +255,9 @@ def detail(task_id):
         search_text += " " + task.description
     related_captures = _find_related_captures(search_text, exclude_ids=[task.id])
 
+    # All tasks for the dependency dropdown (exclude self)
+    all_tasks = Task.query.filter(Task.id != task.id).order_by(Task.title).all()
+
     return render_template(
         "tasks/detail.html",
         task=task,
@@ -264,6 +267,7 @@ def detail(task_id):
         priorities=PRIORITIES,
         recurrences=RECURRENCES,
         related_captures=related_captures,
+        all_tasks=all_tasks,
     )
 
 
@@ -299,6 +303,18 @@ def update(task_id):
         task.set_tags(data["tags"])
     if "links" in data:
         task.set_links(data["links"])
+    if "depends_on_id" in data:
+        new_dep = data["depends_on_id"]
+        if new_dep:
+            new_dep = int(new_dep)
+            if new_dep == task.id:
+                return {"error": "A task cannot depend on itself"}, 400
+            dep_task = Task.query.get(new_dep)
+            if not dep_task:
+                return {"error": "Dependency task not found"}, 404
+            if task.would_create_cycle(new_dep):
+                return {"error": "This would create a circular dependency"}, 400
+        task.depends_on_id = new_dep or None
 
     # Handle status transitions
     if new_status == "done" and old_status != "done":

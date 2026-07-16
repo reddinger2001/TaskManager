@@ -1,18 +1,21 @@
-"""Embedding generation using sentence-transformers.
+"""Embedding generation using ONNX runtime.
 
-Generates 384-dim float vectors using the all-MiniLM-L6-v2 model for semantic
-search via sqlite-vec. Caches the model instance globally so it is loaded only
-once per process.
+Generates 384-dim float vectors using the all-MiniLM-L6-v2 model (ONNX format)
+for semantic search via sqlite-vec. Uses onnxruntime instead of PyTorch,
+reducing dependency footprint from ~500MB to ~65MB.
 
-Note: sentence_transformers is imported lazily inside functions to avoid
-blocking app startup. The FTS5 hooks in this module do NOT depend on the
-embedding model and can be used independently.
+Caches the model instance globally so it is loaded only once per process.
+
+Note: onnxruntime is imported lazily inside functions to avoid blocking app
+startup. The FTS5 hooks in this module do NOT depend on the embedding model
+and can be used independently.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import math
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -21,6 +24,7 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 
 _model = None
+_tokenizer = None
 
 # Queue of (task_id, title, description) to embed after commit.
 _pending_embeddings: List[tuple] = []
@@ -29,30 +33,67 @@ _pending_embeddings: List[tuple] = []
 _pending_fts5: List[tuple] = []
 
 
-def get_model():
-    """Return the singleton embedding model, loading it on first call.
+def get_session():
+    """Return the singleton ONNX session + tokenizer, loading on first call.
 
-    Lazily imports sentence_transformers to avoid blocking app startup.
+    Lazily imports onnxruntime and tokenizers to avoid blocking app startup.
+    Downloads the ONNX model from HuggingFace if not cached locally.
     """
-    global _model
+    global _model, _tokenizer
     if _model is None:
-        from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer(MODEL_NAME)
-    return _model
+        import numpy as np
+        from huggingface_hub import hf_hub_download
+        from tokenizers import Tokenizer
+
+        # Download ONNX model and tokenizer from HuggingFace
+        model_path = hf_hub_download(
+            repo_id=f"onnx-community/{MODEL_NAME}",
+            filename="model.onnx",
+        )
+        tokenizer_path = hf_hub_download(
+            repo_id=MODEL_NAME,
+            filename="tokenizer.json",
+        )
+
+        import onnxruntime as ort
+        _model = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+        _tokenizer = Tokenizer.from_file(tokenizer_path)
+    return _model, _tokenizer
+
+
+def _normalize(vec):
+    """L2-normalize a vector."""
+    norm = math.sqrt(sum(x * x for x in vec))
+    if norm == 0:
+        return vec
+    return [x / norm for x in vec]
 
 
 def embed(text: str) -> List[float]:
     """Generate a 384-dim embedding for the given text."""
-    vec = get_model().encode(text, normalize_embeddings=True)
-    return vec.tolist()
+    import numpy as np
+    session, tokenizer = get_session()
+
+    encoding = tokenizer.encode(text, add_special_tokens=True)
+    input_ids = np.array([encoding.ids], dtype=np.int64)
+    attention_mask = np.array([encoding.attention_mask], dtype=np.int64)
+
+    inputs = {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+    }
+    output = session.run(None, inputs)[0]  # shape: (1, seq_len, 384)
+
+    # Mean pooling over the sequence length, masked
+    mask = attention_mask[0]
+    pooled = sum(output[0][i] for i in range(len(mask)) if mask[i]) / max(sum(mask), 1)
+
+    return _normalize(pooled.tolist())
 
 
 def embed_batch(texts: List[str]) -> List[List[float]]:
     """Generate embeddings for a batch of texts."""
-    if not texts:
-        return []
-    vecs = get_model().encode(texts, normalize_embeddings=True)
-    return vecs.tolist()
+    return [embed(t) for t in texts]
 
 
 def search_similar(query_text: str, limit: int = 5, exclude_ids: List[int] | None = None) -> List[tuple]:
