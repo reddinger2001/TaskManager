@@ -44,8 +44,10 @@ def get_excludes():
         "instance",       # database lives here — each install gets its own
         "backups",
         "prototypes",
+        "ui-prototypes",
         "node_modules",
         ".playwright-cli",
+        "scripts",         # dev scripts not needed for end users
         "*.pyc",
         ARCHIVE_NAME,
     }
