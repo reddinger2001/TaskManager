@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ log.title }} — TaskManager{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <a href="{{ request.referrer or '/' }}" class="text-xs mono text-muted hover:text-text transition-colors no-underline mb-4 inline-block">&larr; Back</a>
+
+    <div class="bg-panel border border-border rounded-xl p-6">
+        <h2 class="text-lg font-bold mono text-text mb-1">{{ log.title }}</h2>
+        <p class="text-xs mono text-muted mb-4">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+
+        {% if log.notes %}
+        <div class="text-sm text-text leading-relaxed whitespace-pre-wrap">{{ log.notes }}</div>
+        {% endif %}
+
+        <div class="mt-6 pt-4 border-t border-border flex items-center gap-4">
+            {% if log.task_id %}
+            <a href="/tasks/{{ log.task_id }}" class="text-xs mono text-accent hover:text-cyan-300 transition-colors no-underline">View Task #{{ log.task_id }}</a>
+            {% endif %}
+            {% if log.project_id %}
+            <a href="/projects/{{ log.project_id }}" class="text-xs mono text-accent hover:text-cyan-300 transition-colors no-underline">View Project #{{ log.project_id }}</a>
+            {% endif %}
+            <form action="/logs/{{ log.id }}" method="post" class="ml-auto" onsubmit="return confirm('Delete this log?')">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="text-xs mono text-red-400 hover:text-red-300 transition-colors">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

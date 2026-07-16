@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, request
+from flask import Blueprint, redirect, render_template, request
 
 from app.models import Log, Project, Task, db
 
@@ -35,6 +35,12 @@ def create_task_log(task_id):
     db.session.commit()
 
     return redirect(request.referrer or "/")
+
+
+@logs_bp.route("/logs/<int:log_id>")
+def log_detail(log_id):
+    log = Log.query.get_or_404(log_id)
+    return render_template("logs/detail.html", log=log)
 
 
 @logs_bp.route("/logs/<int:log_id>", methods=["POST", "DELETE"])
