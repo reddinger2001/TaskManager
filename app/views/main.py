@@ -306,44 +306,107 @@ def gantt_export():
 
 @main_bp.route("/gantt/report")
 def gantt_report():
-    """Generate a markdown task report."""
-    from datetime import date as date_type
+    """Generate a detailed markdown task report grouped by project."""
+    from datetime import date as date_type, timedelta
+    today = date_type.today()
+
     project_id = request.args.get("project_id", "").strip()
     tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
     if project_id:
         tasks = [t for t in tasks if t.project_id == int(project_id)]
 
-    today = date_type.today()
+    # Summary counts
+    total = len(tasks)
+    done_count = len([t for t in tasks if t.status == "done"])
+    active_count = len([t for t in tasks if t.status == "active"])
+    overdue_count = len([t for t in tasks if t.due_date < today and t.status != "done"])
+    blocked_count = len([t for t in tasks if t.status == "blocked"])
+    p0_count = len([t for t in tasks if t.priority == "P0" and t.status != "done"])
+
     lines = [f"# Task Report — {today.isoformat()}", ""]
 
-    overdue = [t for t in tasks if t.due_date < today and t.status != "done"]
-    active = [t for t in tasks if t.status == "active"]
-    backlog = [t for t in tasks if t.status == "backlog"]
-    done = [t for t in tasks if t.status == "done"]
+    # Summary table
+    lines.append("## Summary")
+    lines.append("")
+    lines.append(f"| Metric | Count |")
+    lines.append(f"| --- | --- |")
+    lines.append(f"| Total tasks | {total} |")
+    lines.append(f"| Done | {done_count} ({round(done_count/total*100, 1) if total else 0}%) |")
+    lines.append(f"| Active | {active_count} |")
+    lines.append(f"| Overdue | {overdue_count} |")
+    lines.append(f"| Blocked | {blocked_count} |")
+    lines.append(f"| P0 (open) | {p0_count} |")
+    lines.append("")
 
-    if overdue:
-        lines.append("## Overdue")
-        for t in overdue:
-            days_left = (t.due_date - today).days
-            lines.append(f"- **{t.title}** — {t.due_date.isoformat()} ({abs(days_left)} days overdue) [{t.status}] {t.priority or 'P-'}")
+    # Group by project
+    projects_map = {}
+    for t in tasks:
+        key = t.project.name if t.project else "Inbox"
+        if key not in projects_map:
+            projects_map[key] = []
+        projects_map[key].append(t)
+
+    lines.append("## By Project")
+    lines.append("")
+
+    for proj_name, proj_tasks in sorted(projects_map.items()):
+        proj_done = len([t for t in proj_tasks if t.status == "done"])
+        proj_total = len(proj_tasks)
+        pct = round(proj_done / proj_total * 100, 1) if proj_total else 0
+
+        lines.append(f"### {proj_name}")
+        lines.append("")
+        lines.append(f"**{proj_done}/{proj_total} done ({pct}%)**")
         lines.append("")
 
-    if active:
-        lines.append("## Active")
-        for t in active:
-            lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}")
-        lines.append("")
+        # Overdue in this project
+        proj_overdue = [t for t in proj_tasks if t.due_date < today and t.status != "done"]
+        if proj_overdue:
+            lines.append("#### 🔴 Overdue")
+            for t in sorted(proj_overdue, key=lambda x: x.due_date):
+                days = (today - t.due_date).days
+                dep = f" ← blocked by **{t.blocked_by.title}**" if t.blocked_by else ""
+                blocks = f" (blocks {len(t.blocks)})" if t.blocks else ""
+                lines.append(f"- **{t.title}** — {t.due_date.isoformat()} ({days}d overdue) [{t.status}] {t.priority or 'P-'}{dep}{blocks}")
+            lines.append("")
 
-    if backlog:
-        lines.append("## Backlog")
-        for t in backlog:
-            lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}")
-        lines.append("")
+        # Active in this project
+        proj_active = [t for t in proj_tasks if t.status == "active"]
+        if proj_active:
+            lines.append("#### 🟢 Active")
+            for t in sorted(proj_active, key=lambda x: x.due_date or date_type(9999, 1, 1)):
+                dep = f" ← blocked by **{t.blocked_by.title}**" if t.blocked_by else ""
+                blocks = f" (blocks {len(t.blocks)})" if t.blocks else ""
+                lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}{dep}{blocks}")
+            lines.append("")
 
-    if done:
-        lines.append("## Done")
-        for t in done:
-            lines.append(f"- ~~{t.title}~~ — due {t.due_date.isoformat() if t.due_date else 'N/A'}")
+        # Backlog in this project
+        proj_backlog = [t for t in proj_tasks if t.status == "backlog"]
+        if proj_backlog:
+            lines.append("#### Backlog")
+            for t in sorted(proj_backlog, key=lambda x: (x.priority or "P-", x.due_date or date_type(9999, 1, 1))):
+                dep = f" ← blocked by **{t.blocked_by.title}**" if t.blocked_by else ""
+                blocks = f" (blocks {len(t.blocks)})" if t.blocks else ""
+                lines.append(f"- **{t.title}** — due {t.due_date.isoformat() if t.due_date else 'N/A'} [{t.status}] {t.priority or 'P-'}{dep}{blocks}")
+            lines.append("")
+
+        # Done in this project
+        proj_done_tasks = [t for t in proj_tasks if t.status == "done"]
+        if proj_done_tasks:
+            lines.append("#### ✅ Done")
+            for t in sorted(proj_done_tasks, key=lambda x: x.due_date or date_type(9999, 1, 1)):
+                lines.append(f"- ~~{t.title}~~ — {t.due_date.isoformat() if t.due_date else 'N/A'}")
+            lines.append("")
+
+    # Dependency chains
+    blocking_tasks = [t for t in tasks if t.blocks and t.status != "done"]
+    if blocking_tasks:
+        lines.append("## Dependency Chains")
+        lines.append("")
+        for t in sorted(blocking_tasks, key=lambda x: len(x.blocks), reverse=True):
+            lines.append(f"- **{t.title}** blocks:")
+            for blocked in t.blocks:
+                lines.append(f"  - {blocked.title} [{blocked.status}] {blocked.priority or 'P-'}")
         lines.append("")
 
     return render_template(
