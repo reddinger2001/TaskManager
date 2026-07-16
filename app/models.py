@@ -57,7 +57,7 @@ class Project(db.Model):
         """Check if this project is an ancestor of another (prevents circular refs)."""
         return other_project.id in self.get_descendant_ids()
     tasks: Mapped[list["Task"]] = relationship("Task", backref="project", lazy="select")
-    logs: Mapped[list["Log"]] = relationship("Log", backref="project", lazy="select")
+    logs: Mapped[list["Log"]] = relationship("Log", backref="project", lazy="select", cascade="all, delete-orphan", passive_deletes=True)
 
     def __repr__(self):
         return f"<Project {self.name}>"
@@ -78,6 +78,9 @@ class Task(db.Model):
     recurrence_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     completed_dates: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON array of YYYY-MM-DD
     project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    depends_on_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
+    )
 
     # JSON fields stored as text
     tags: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array of strings
@@ -90,7 +93,10 @@ class Task(db.Model):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Relationships
-    logs: Mapped[list["Log"]] = relationship("Log", backref="task", lazy="select")
+    logs: Mapped[list["Log"]] = relationship("Log", backref="task", lazy="select", cascade="all, delete-orphan", passive_deletes=True)
+    blocked_by: Mapped["Task | None"] = relationship(
+        "Task", remote_side="Task.id", backref=backref("blocks", lazy="select"), lazy="select"
+    )
 
     def get_tags(self):
         if not self.tags:
@@ -125,6 +131,23 @@ class Task(db.Model):
     def set_completed_dates(self, value):
         self.completed_dates = json.dumps(value) if value else None
 
+    def would_create_cycle(self, other_task_id: int) -> bool:
+        """Check if setting depends_on_id=other_task_id would create a circular dependency.
+
+        Walks the chain upward from other_task_id to see if we'd loop back to self.
+        """
+        visited = set()
+        current_id = other_task_id
+        while current_id is not None:
+            if current_id == self.id:
+                return True  # cycle detected
+            if current_id in visited:
+                break  # unrelated cycle elsewhere, not involving us
+            visited.add(current_id)
+            parent = db.session.get(Task, current_id)
+            current_id = parent.depends_on_id if parent else None
+        return False
+
     def __repr__(self):
         return f"<Task {self.title}>"
 
@@ -135,8 +158,15 @@ class Log(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    task_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("tasks.id"), nullable=True)
-    project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    task_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
+    project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=True)
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "(task_id IS NOT NULL) OR (project_id IS NOT NULL)",
+            name="ck_log_must_have_parent",
+        ),
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
