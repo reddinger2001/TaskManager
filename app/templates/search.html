@@ -106,7 +106,8 @@
     </h3>
     <div class="bg-panel border border-border rounded-lg divide-y divide-border">
         {% for l in log_results %}
-        <a href="{% if l.task_id %}/tasks/{{ l.task_id }}{% elif l.project_id %}/projects/{{ l.project_id }}{% else %}#{% endif %}" class="block px-4 py-3 hover:bg-surface transition-colors no-underline">
+        {% if l.task_id or l.project_id %}
+        <a href="{% if l.task_id %}/tasks/{{ l.task_id }}{% else %}/projects/{{ l.project_id }}{% endif %}" class="block px-4 py-3 hover:bg-surface transition-colors no-underline">
             <div class="text-sm text-text mb-1">{{ highlight(l.title, q) }}</div>
             {% if l.notes %}
             <div class="text-xs mono text-muted line-clamp-2">{{ highlight(l.notes, q) }}</div>
@@ -117,6 +118,18 @@
                 {% if l.project_id %}· Project #{{ l.project_id }}{% endif %}
             </div>
         </a>
+        {% else %}
+        <div class="px-4 py-3">
+            <div class="text-sm text-text mb-1">{{ highlight(l.title, q) }}</div>
+            {% if l.notes %}
+            <div class="text-xs mono text-muted line-clamp-2">{{ highlight(l.notes, q) }}</div>
+            {% endif %}
+            <div class="text-[10px] mono text-muted mt-1.5">
+                {{ l.created_at.strftime('%Y-%m-%d') }}
+                <span class="italic">standalone note</span>
+            </div>
+        </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>
