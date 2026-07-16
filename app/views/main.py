@@ -3,7 +3,8 @@ from datetime import date
 import json
 import re
 
-from flask import Blueprint, current_app as app, jsonify, request, render_template
+from flask import Blueprint, current_app as app, flash, jsonify, redirect, request, render_template, send_file
+import os
 from markupsafe import Markup
 
 from app.models import Log, Project, Task, db
@@ -324,3 +325,57 @@ def _generate_recurring_events(task, color_map):
         else:
             break
     return events
+
+# --- Settings ---
+
+@main_bp.route("/settings")
+def settings():
+    from app.models import db
+    import os
+    db_path = app.config.get("SQLALCHEMY_DATABASE_URI", "").replace("sqlite:///", "")
+    db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+    return render_template("settings.html", db_path=db_path, db_size=db_size)
+
+
+@main_bp.route("/settings/export-db", methods=["POST"])
+def export_db():
+    from app.models import db
+    import shutil
+    db_path = app.config.get("SQLALCHEMY_DATABASE_URI", "").replace("sqlite:///", "")
+    if not os.path.exists(db_path):
+        flash("Database file not found", "error")
+        return redirect("/settings")
+    # Copy to temp file for download (avoids locking the live DB)
+    import tempfile
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp.close()
+    shutil.copy2(db_path, tmp.name)
+    return send_file(tmp.name, as_attachment=True, download_name="taskmanager.db")
+
+
+@main_bp.route("/settings/import-db", methods=["POST"])
+def import_db():
+    from app.models import db
+    import shutil
+    db_path = app.config.get("SQLALCHEMY_DATABASE_URI", "").replace("sqlite:///", "")
+    if "db_file" not in request.files:
+        flash("No file uploaded", "error")
+        return redirect("/settings")
+    f = request.files["db_file"]
+    if not f.filename or not f.filename.endswith(".db"):
+        flash("Invalid file — must be a .db file", "error")
+        return redirect("/settings")
+    # Safety backup
+    backup_path = db_path + ".backup"
+    if os.path.exists(db_path):
+        shutil.copy2(db_path, backup_path)
+    try:
+        f.save(db_path)
+        flash("Database imported successfully", "success")
+    except Exception as e:
+        # Rollback from safety backup
+        if os.path.exists(backup_path):
+            shutil.copy2(backup_path, db_path)
+            os.remove(backup_path)
+        flash(f"Import failed: {e}", "error")
+    return redirect("/settings")
