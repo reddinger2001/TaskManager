@@ -3,7 +3,7 @@ from datetime import date
 import json
 import re
 
-from flask import Blueprint, current_app as app, flash, g, jsonify, redirect, request, render_template, send_file
+from flask import Blueprint, current_app as app, flash, g, jsonify, redirect, request, render_template, send_file, url_for
 import os
 from markupsafe import Markup
 
@@ -521,10 +521,9 @@ def import_db():
 
 @main_bp.route("/settings/users", methods=["GET", "POST"])
 def settings_users():
-    from flask_login import current_user
     from app.models import User
 
-    if not current_user.is_admin:
+    if not g.current_user_is_admin:
         flash("Only administrators can manage users", "error")
         return redirect(url_for("main.settings"))
 
@@ -565,9 +564,39 @@ def settings_users():
             if not new_password:
                 flash("Password cannot be empty", "error")
             else:
-                current_user.set_password(new_password)
+                from app.models import User
+                me = db.session.get(User, g.current_user_id)
+                me.set_password(new_password)
                 db.session.commit()
                 flash("Your password has been changed", "success")
+
+        elif action == "toggle_admin":
+            user_id = int(request.form.get("user_id", 0))
+            if user_id != g.current_user_id:
+                target = db.session.get(User, user_id)
+                if target:
+                    target.is_admin = not target.is_admin
+                    db.session.commit()
+                    role = "admin" if target.is_admin else "regular"
+                    flash(f"{target.username} is now a {role} user", "success")
+            else:
+                flash("You cannot change your own admin status", "error")
+
+        elif action == "delete":
+            user_id = int(request.form.get("user_id", 0))
+            if user_id != g.current_user_id:
+                target = db.session.get(User, user_id)
+                if target:
+                    # Reassign tasks/projects/logs to current admin
+                    from app.models import Task, Project, Log
+                    Task.query.filter_by(user_id=user_id).update({Task.user_id: g.current_user_id}, synchronize_session=False)
+                    Project.query.filter_by(user_id=user_id).update({Project.user_id: g.current_user_id}, synchronize_session=False)
+                    Log.query.filter_by(user_id=user_id).update({Log.user_id: g.current_user_id}, synchronize_session=False)
+                    db.session.delete(target)
+                    db.session.commit()
+                    flash(f"User \"{target.username}\" deleted — items reassigned to you", "success")
+            else:
+                flash("You cannot delete your own account", "error")
 
         return redirect(url_for("main.settings_users"))
 

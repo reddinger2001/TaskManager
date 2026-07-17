@@ -53,10 +53,15 @@ def create_app():
         from flask import g
         from flask_login import current_user
         from app.models import scoped_query
-        g.scoped_query = lambda model: scoped_query(model, current_user)
-        g.current_user_id = current_user.id
-        g.current_user_is_admin = current_user.is_admin
-        g.current_username = current_user.username
+        if current_user.is_authenticated:
+            g.scoped_query = lambda model: scoped_query(model, current_user)
+            g.current_user_id = current_user.id
+            g.current_user_is_admin = current_user.is_admin
+            g.current_username = current_user.username
+        else:
+            g.current_user_id = None
+            g.current_user_is_admin = False
+            g.current_username = ""
 
     @app.context_processor
     def inject_user_context():

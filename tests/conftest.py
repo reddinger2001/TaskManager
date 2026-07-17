@@ -47,22 +47,40 @@ def client(app):
     from flask import g
     from app.models import User, scoped_query
 
+    # Save original handlers so we can restore them
+    original_handlers = list(app.before_request_funcs.get(None, []))
+
+    # Remove the require_login before_request handler for tests
+    handlers = [h for h in app.before_request_funcs.get(None, []) if h.__name__ != "require_login"]
+    app.before_request_funcs[None] = handlers
+
+    def setup_test_user():
+        admin = User.query.filter_by(username="admin").first()
+        g.scoped_query = lambda model: scoped_query(model, admin)
+        g.current_user_id = admin.id
+        g.current_user_is_admin = True
+        g.current_username = "admin"
+
+    handlers2 = [h for h in app.before_request_funcs.get(None, []) if h.__name__ != "set_scoped_query"]
+    handlers2.append(setup_test_user)
+    app.before_request_funcs[None] = handlers2
+
     with app.test_client() as c:
-        # Remove the require_login before_request handler for tests
-        handlers = [h for h in app.before_request_funcs.get(None, []) if h.__name__ != "require_login"]
-        app.before_request_funcs[None] = handlers
+        try:
+            yield c
+        finally:
+            # Restore original handlers so raw_client tests work correctly
+            app.before_request_funcs[None] = original_handlers
 
-        def setup_test_user():
-            admin = User.query.filter_by(username="admin").first()
-            g.scoped_query = lambda model: scoped_query(model, admin)
-            g.current_user_id = admin.id
-            g.current_user_is_admin = True
-            g.current_username = "admin"
 
-        handlers2 = [h for h in app.before_request_funcs.get(None, []) if h.__name__ != "set_scoped_query"]
-        handlers2.append(setup_test_user)
-        app.before_request_funcs[None] = handlers2
+@pytest.fixture
+def raw_client(app):
+    """Create a test client with NO mocking — real login required.
 
+    Use this for tests that need to test auth, login/logout, and real
+    scoped queries. You must log in before making requests.
+    """
+    with app.test_client() as c:
         yield c
 
 

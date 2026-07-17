@@ -13,6 +13,20 @@
         </a>
         {% endif %}
         <h2 class="text-lg font-bold mono tracking-wider text-text">{{ project.name }}</h2>
+        {% set shared_ids = project.get_shared_user_ids() %}
+        {% if shared_ids %}
+        <span class="flex items-center gap-1">
+            <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] mono">SHARED</span>
+            {% for uid in shared_ids %}
+            {% set u = all_users|selectattr("id", "equalto", uid)|first %}
+            {% if u %}
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-[9px] mono font-bold text-blue-400" title="Shared with {{ u.username }}">
+                {{ u.username[0].upper() }}
+            </span>
+            {% endif %}
+            {% endfor %}
+        </span>
+        {% endif %}
     </div>
     <div class="flex items-center gap-2">
         <button @click="showEdit = true"

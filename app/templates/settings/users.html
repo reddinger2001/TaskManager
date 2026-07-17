@@ -78,16 +78,39 @@
                         {% endif %}
                     </div>
                 </div>
-                <form method="POST" class="flex items-center gap-2">
-                    <input type="hidden" name="action" value="reset_password">
-                    <input type="hidden" name="user_id" value="{{ user.id }}">
-                    {{ csrf_token() }}
-                    <input type="password" name="new_password" placeholder="New password"
-                           class="w-36 bg-surface border border-border rounded px-2 py-1 text-xs mono text-text focus:outline-none focus:ring-1 focus:ring-accent/30">
-                    <button type="submit" class="text-xs mono text-muted hover:text-accent transition-colors px-2 py-1">
-                        Reset
-                    </button>
-                </form>
+                <div class="flex items-center gap-3">
+                    <!-- Toggle admin -->
+                    <form method="POST" class="flex items-center gap-1">
+                        <input type="hidden" name="action" value="toggle_admin">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        {{ csrf_token() }}
+                        <button type="submit" class="text-xs mono text-muted hover:text-yellow-400 transition-colors px-2 py-1"
+                                title="{% if user.is_admin %}Remove admin{% else %}Make admin{% endif %}">
+                            {% if user.is_admin %}👑{% else %}🔓{% endif %}
+                        </button>
+                    </form>
+                    <!-- Reset password -->
+                    <form method="POST" class="flex items-center gap-2">
+                        <input type="hidden" name="action" value="reset_password">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        {{ csrf_token() }}
+                        <input type="password" name="new_password" placeholder="New password"
+                               class="w-36 bg-surface border border-border rounded px-2 py-1 text-xs mono text-text focus:outline-none focus:ring-1 focus:ring-accent/30">
+                        <button type="submit" class="text-xs mono text-muted hover:text-accent transition-colors px-2 py-1">
+                            Reset
+                        </button>
+                    </form>
+                    <!-- Delete -->
+                    <form method="POST" class="flex items-center gap-1"
+                          onsubmit="return confirm('Delete {{ user.username }}? Their items will be reassigned to you.')">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        {{ csrf_token() }}
+                        <button type="submit" class="text-xs mono text-muted hover:text-red-400 transition-colors px-2 py-1" title="Delete user">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
         </div>

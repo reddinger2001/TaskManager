@@ -22,7 +22,10 @@ def login():
             next_page = request.args.get("next")
             return redirect(next_page or url_for("main.index"))
 
-        flash("Invalid username or password", "error")
+        if not user:
+            flash("User \"" + username + "\" not found", "error")
+        else:
+            flash("Incorrect password for \"" + username + "\"", "error")
 
     return render_template("auth/login.html")
 
