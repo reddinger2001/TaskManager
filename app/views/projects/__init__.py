@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import text
 
 from app.models import Project, Task, db
@@ -18,9 +18,11 @@ _COLOR_PALETTE = [
 
 def _auto_color() -> str:
     """Pick the least-used color from the palette."""
-    existing = db.session.query(Project.color).filter(Project.color.isnot(None)).all()
+    from flask import g
+    existing = g.scoped_query(Project).filter(Project.color.isnot(None)).all()
     counts = {}
-    for (c,) in existing:
+    for p in existing:
+        c = p.color
         counts[c] = counts.get(c, 0) + 1
     return min(_COLOR_PALETTE, key=lambda c: counts.get(c, 0))
 
@@ -29,8 +31,14 @@ def _auto_color() -> str:
 def list_projects():
     from sqlalchemy import text
 
+    # Build scope condition: admin sees all, others see their own + shared
+    if g.current_user_is_admin:
+        scope_where = ""
+    else:
+        scope_where = f"WHERE p.user_id = {g.current_user_id} OR (p.shared_with IS NOT NULL AND p.shared_with LIKE '%{g.current_user_id}%')"
+
     # Single query with task_count and completion_pct computed in SQL
-    results = db.session.execute(text("""
+    results = db.session.execute(text(f"""
         SELECT
             p.id, p.name, p.description, p.color, p.parent_id,
             p.start_date, p.end_date, p.created_at, p.updated_at,
@@ -42,6 +50,7 @@ def list_projects():
             ) AS completion_pct
         FROM projects p
         LEFT JOIN tasks t ON p.id = t.project_id
+        {scope_where}
         GROUP BY p.id
         ORDER BY p.created_at DESC
     """)).fetchall()
@@ -75,6 +84,7 @@ def create():
         start_date=date.fromisoformat(request.form["start_date"]) if request.form.get("start_date") else None,
         end_date=date.fromisoformat(request.form["end_date"]) if request.form.get("end_date") else None,
         parent_id=parent_id,
+        user_id=g.current_user_id,
     )
     db.session.add(project)
     db.session.commit()
@@ -84,10 +94,10 @@ def create():
 
 @projects_bp.route("/projects/<int:project_id>")
 def detail(project_id):
-    project = Project.query.get_or_404(project_id)
+    project = g.scoped_query(Project).get_or_404(project_id)
     # Include tasks from this project and all child projects
     descendant_ids = project.get_descendant_ids()
-    tasks = Task.query.filter(
+    tasks = g.scoped_query(Task).filter(
         Task.project_id.in_(descendant_ids),
     ).order_by(Task.created_at.desc()).all()
 
@@ -98,14 +108,14 @@ def detail(project_id):
         search_text += " " + project.description
     related_captures = _find_related_captures(search_text)
 
-    all_projects = Project.query.order_by(Project.name.asc()).all()
+    all_projects = g.scoped_query(Project).order_by(Project.name.asc()).all()
     today_date = date.today()
     return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, today_date=today_date)
 
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])
 def update(project_id):
-    project = Project.query.get_or_404(project_id)
+    project = g.scoped_query(Project).get_or_404(project_id)
     data = request.get_json(silent=True) or {}
 
     if "name" in data:
@@ -121,7 +131,7 @@ def update(project_id):
     if "parent_id" in data:
         new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
         # Prevent circular references: can't set parent to self or a descendant
-        if new_parent_id and project.is_ancestor_of(Project.query.get(new_parent_id)):
+        if new_parent_id and project.is_ancestor_of(g.scoped_query(Project).get(new_parent_id)):
             return {"ok": False, "error": "Cannot set parent — would create a circular reference"}, 400
         project.parent_id = new_parent_id
 
@@ -137,7 +147,7 @@ def delete(project_id):
         if _method != "DELETE":
             return redirect(url_for("projects.detail", project_id=project_id))
 
-    project = Project.query.get_or_404(project_id)
+    project = g.scoped_query(Project).get_or_404(project_id)
     name = project.name
     db.session.delete(project)
     db.session.commit()

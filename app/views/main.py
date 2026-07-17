@@ -3,7 +3,7 @@ from datetime import date
 import json
 import re
 
-from flask import Blueprint, current_app as app, flash, jsonify, redirect, request, render_template, send_file
+from flask import Blueprint, current_app as app, flash, g, jsonify, redirect, request, render_template, send_file
 import os
 from markupsafe import Markup
 
@@ -19,15 +19,15 @@ def index():
     today = date.today()
     week_end = today + timedelta(days=7 - today.weekday())  # end of current week
 
-    # Single query for all non-done tasks
-    tasks = Task.query.filter(Task.status != "done").all()
+    # Single query for all non-done tasks (scoped to user)
+    tasks = g.scoped_query(Task).filter(Task.status != "done").all()
 
     # Big numbers
     total_open = len(tasks)
     active_count = len([t for t in tasks if t.status == "active"])
     on_fire_count = len([t for t in tasks if t.priority == "P0" or t.status == "blocked"])
     blocked_count = len([t for t in tasks if t.status == "blocked"])
-    done_count = Task.query.filter(Task.status == "done").count()
+    done_count = g.scoped_query(Task).filter(Task.status == "done").count()
 
     # Priority counts
     priority_counts = {}
@@ -66,13 +66,13 @@ def index():
     )
 
     # Recently done
-    done_tasks = Task.query.filter(Task.status == "done").order_by(Task.completed_at.desc()).limit(5).all()
+    done_tasks = g.scoped_query(Task).filter(Task.status == "done").order_by(Task.completed_at.desc()).limit(5).all()
 
     # Project health
-    projects_all = db.session.query(Project).order_by(Project.name).all()
+    projects_all = g.scoped_query(Project).order_by(Project.name).all()
     project_health = []
     for proj in projects_all:
-        proj_tasks = Task.query.filter(Task.project_id == proj.id).all()
+        proj_tasks = g.scoped_query(Task).filter(Task.project_id == proj.id).all()
         done = len([t for t in proj_tasks if t.status == "done"])
         total = len(proj_tasks)
         pct = round(done / total * 100, 1) if total > 0 else 0
@@ -131,7 +131,7 @@ def search():
 
         if rows:
             task_ids = [row[0] for row in rows]
-            tasks = db.session.query(Task).filter(Task.id.in_(task_ids)).all()
+            tasks = g.scoped_query(Task).filter(Task.id.in_(task_ids)).all()
             rank_map = {row[0]: row[1] for row in rows}
             for t in sorted(tasks, key=lambda x: rank_map.get(x.id, 0)):
                 task_results.append(t)
@@ -141,14 +141,14 @@ def search():
 
     # Also search projects by name (simple ilike)
     if q:
-        projects = db.session.query(Project).filter(Project.name.ilike(f"%{q}%")).order_by(Project.name).all()
+        projects = g.scoped_query(Project).filter(Project.name.ilike(f"%{q}%")).order_by(Project.name).all()
         project_results = projects
         total += len(projects)
 
     # Search logs by title/notes (simple ilike)
     if q:
         logs = (
-            db.session.query(Log)
+            g.scoped_query(Log)
             .filter(db.or_(Log.title.ilike(f"%{q}%"), Log.notes.ilike(f"%{q}%")))
             .order_by(Log.created_at.desc())
             .limit(50)
@@ -186,14 +186,14 @@ def board():
     project_id = request.args.get("project_id", "").strip()
     assignee = request.args.get("assignee", "").strip()
 
-    query = db.session.query(Task)
+    query = g.scoped_query(Task)
     if project_id:
         query = query.filter(Task.project_id == int(project_id))
     if assignee:
         query = query.filter(Task.assignee.ilike(f"%{assignee}%"))
 
     tasks = query.order_by(Task.created_at.desc()).all()
-    projects = Project.query.order_by(Project.name).all()
+    projects = g.scoped_query(Project).order_by(Project.name).all()
 
     # Collect unique assignees
     assignees = sorted(set(t.assignee for t in tasks if t.assignee))
@@ -233,8 +233,8 @@ def calendar():
 @main_bp.route("/gantt")
 def gantt():
     project_id = request.args.get("project_id", "").strip()
-    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
-    projects = Project.query.order_by(Project.name).all()
+    tasks = g.scoped_query(Task).filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    projects = g.scoped_query(Project).order_by(Project.name).all()
 
     task_data = []
     for t in tasks:
@@ -263,8 +263,8 @@ def gantt_export():
     from datetime import date as date_type
 
     project_id = request.args.get("project_id", "").strip()
-    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
-    projects = Project.query.order_by(Project.name).all()
+    tasks = g.scoped_query(Task).filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    projects = g.scoped_query(Project).order_by(Project.name).all()
 
     task_data = []
     for t in tasks:
@@ -291,7 +291,7 @@ def gantt_report():
     today = date_type.today()
 
     project_id = request.args.get("project_id", "").strip()
-    tasks = Task.query.filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
+    tasks = g.scoped_query(Task).filter(Task.due_date.isnot(None)).order_by(Task.due_date).all()
     if project_id:
         tasks = [t for t in tasks if t.project_id == int(project_id)]
 
@@ -398,7 +398,7 @@ def gantt_report():
 
 @main_bp.route("/api/calendar/events")
 def calendar_events():
-    tasks = Task.query.filter(Task.due_date.isnot(None)).all()
+    tasks = g.scoped_query(Task).filter(Task.due_date.isnot(None)).all()
     events = []
     color_map = {
         "backlog": "#6b7280",

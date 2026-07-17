@@ -8,13 +8,21 @@ try:
 except ImportError:
     pass
 
-from flask import Flask
+from flask import Flask, redirect, url_for
+from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 
 from app.extensions import init_extensions
-from app.models import db
+from app.models import User, db
 
 csrf = CSRFProtect()
+login_manager = LoginManager()
+login_manager.login_view = "auth.login"
+login_manager.login_message_category = "info"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
 
 
 def create_app():
@@ -28,6 +36,27 @@ def create_app():
     # Initialize database and extensions
     init_extensions(app)
 
+    # Flask-Login
+    login_manager.init_app(app)
+
+    # Require login for all routes except /login and /static/
+    @app.before_request
+    def require_login():
+        from flask_login import current_user
+        from flask import request
+        if not current_user.is_authenticated and request.endpoint not in ("auth.login", "static"):
+            return redirect(url_for("auth.login", next=request.url))
+
+    # Expose scoped_query and user info on g for use in views
+    @app.before_request
+    def set_scoped_query():
+        from flask import g
+        from flask_login import current_user
+        from app.models import scoped_query
+        g.scoped_query = lambda model: scoped_query(model, current_user)
+        g.current_user_id = current_user.id
+        g.current_user_is_admin = current_user.is_admin
+
     # CSRF protection — only protect POST and DELETE (PATCH is used by Alpine.js API calls)
     app.config["WTF_CSRF_METHODS"] = {"POST", "DELETE"}
     csrf.init_app(app)
@@ -35,6 +64,9 @@ def create_app():
     # Register FTS5 hooks (always on — keeps keyword search index in sync)
     from app.services.search import register_fts5_hooks
     register_fts5_hooks(app)
+
+    from app.views.auth import auth_bp
+    app.register_blueprint(auth_bp)
 
     from app.views.main import main_bp
     app.register_blueprint(main_bp)

@@ -2,7 +2,7 @@ import csv
 import io
 from datetime import date, datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, send_file, url_for
 
 from app.models import Project, Task, db
 
@@ -50,7 +50,7 @@ def build_task_query():
     if sort_order not in ("asc", "desc"):
         sort_order = DEFAULT_SORT[1]
 
-    query = Task.query.outerjoin(Project, Task.project_id == Project.id)
+    query = g.scoped_query(Task).outerjoin(Project, Task.project_id == Project.id)
 
     if q:
         query = query.filter(Task.title.ilike(f"%{q}%"))
@@ -109,15 +109,15 @@ def list_tasks():
     tasks = pagination.items
 
     # Gather filter options
-    projects = Project.query.order_by(Project.name).all()
+    projects = g.scoped_query(Project).order_by(Project.name).all()
     assignees = (
-        db.session.query(Task.assignee)
+        g.scoped_query(Task)
         .filter(Task.assignee.isnot(None))
         .distinct()
         .order_by(Task.assignee.asc())
         .all()
     )
-    assignees = [a[0] for a in assignees]
+    assignees = [a.assignee for a in assignees]
 
     # All unique tags across tasks (for filter dropdown)
     all_tags = set()
@@ -196,6 +196,7 @@ def create():
         due_date=date.fromisoformat(request.form["due_date"]) if request.form.get("due_date") else None,
         assignee=request.form.get("assignee", "").strip() or None,
         project_id=int(request.form["project_id"]) if request.form.get("project_id") else None,
+        user_id=g.current_user_id,
         recurrence=request.form.get("recurrence") or None,
         recurrence_end=date.fromisoformat(request.form["recurrence_end"]) if request.form.get("recurrence_end") else None,
     )
@@ -234,7 +235,7 @@ def _find_related_captures(query_text, exclude_ids=None, limit=5):
         if exclude_ids:
             task_ids = [tid for tid in task_ids if tid not in set(exclude_ids)]
 
-        return Task.query.filter(
+        return g.scoped_query(Task).filter(
             Task.id.in_(task_ids),
             Task.project_id.is_(None),
         ).all()
@@ -244,9 +245,9 @@ def _find_related_captures(query_text, exclude_ids=None, limit=5):
 
 @tasks_bp.route("/tasks/<int:task_id>")
 def detail(task_id):
-    task = Task.query.get_or_404(task_id)
-    projects = Project.query.order_by(Project.name).all()
-    assignees = sorted(set(t.assignee for t in Task.query.filter(Task.assignee.isnot(None)).all() if t.assignee))
+    task = g.scoped_query(Task).get_or_404(task_id)
+    projects = g.scoped_query(Project).order_by(Project.name).all()
+    assignees = sorted(set(t.assignee for t in g.scoped_query(Task).filter(Task.assignee.isnot(None)).all() if t.assignee))
 
     # FTS5-based related captures (inbox tasks matching this task's content)
     search_text = task.title
@@ -255,7 +256,7 @@ def detail(task_id):
     related_captures = _find_related_captures(search_text, exclude_ids=[task.id])
 
     # All tasks for the dependency dropdown (exclude self)
-    all_tasks = Task.query.filter(Task.id != task.id).order_by(Task.title).all()
+    all_tasks = g.scoped_query(Task).filter(Task.id != task.id).order_by(Task.title).all()
 
     return render_template(
         "tasks/detail.html",
@@ -272,7 +273,7 @@ def detail(task_id):
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["PATCH"])
 def update(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = g.scoped_query(Task).get_or_404(task_id)
     data = request.get_json(silent=True) or {}
 
     old_status = task.status
@@ -308,7 +309,7 @@ def update(task_id):
             new_dep = int(new_dep)
             if new_dep == task.id:
                 return {"error": "A task cannot depend on itself"}, 400
-            dep_task = Task.query.get(new_dep)
+            dep_task = g.scoped_query(Task).get(new_dep)
             if not dep_task:
                 return {"error": "Dependency task not found"}, 404
             if task.would_create_cycle(new_dep):
@@ -332,7 +333,7 @@ def delete(task_id):
         if _method != "DELETE":
             return redirect(url_for("tasks.detail", task_id=task_id))
 
-    task = Task.query.get_or_404(task_id)
+    task = g.scoped_query(Task).get_or_404(task_id)
     title = task.title
     db.session.delete(task)
     db.session.commit()

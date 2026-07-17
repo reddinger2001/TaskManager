@@ -1,11 +1,94 @@
 import json
 from datetime import date, datetime, timezone
 
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 db = SQLAlchemy()
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    tasks: Mapped[list["Task"]] = relationship("Task", backref="owner", lazy="select")
+    projects: Mapped[list["Project"]] = relationship("Project", backref="owner", lazy="select")
+    logs: Mapped[list["Log"]] = relationship("Log", backref="owner", lazy="select")
+
+    def set_password(self, password: str):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
+
+    def __repr__(self):        return f"<User {self.username}>"
+
+
+def scoped_query(model, user):
+    """Return a query filtered by the current user's scope.
+
+    Admin users see everything. Regular users see:
+    - Items they own (user_id == their id)
+    - Projects shared with them (their id in project.shared_with)
+    - Tasks belonging to shared projects
+    """
+    if user.is_admin:
+        return model.query
+
+    if model == Project:
+        from sqlalchemy import or_
+        return Project.query.filter(
+            or_(
+                Project.user_id == user.id,
+                # Check if user id is in the shared_with JSON array
+                Project.shared_with.isnot(None),
+                Project.shared_with.contains(str(user.id)),
+            )
+        )
+
+    if model == Task:
+        from sqlalchemy import or_
+        # User's own tasks + tasks in projects shared with them
+        shared_project_ids = db.session.query(Project.id).filter(
+            Project.user_id != user.id,
+            Project.shared_with.isnot(None),
+            Project.shared_with.contains(str(user.id)),
+        ).subquery()
+        return Task.query.filter(
+            or_(
+                Task.user_id == user.id,
+                Task.project_id.in_(db.session.query(shared_project_ids.c.id)),
+            )
+        )
+
+    if model == Log:
+        from sqlalchemy import or_
+        # User's own logs + logs on their tasks + logs on shared projects
+        shared_project_ids = db.session.query(Project.id).filter(
+            Project.user_id != user.id,
+            Project.shared_with.isnot(None),
+            Project.shared_with.contains(str(user.id)),
+        ).subquery()
+        return Log.query.filter(
+            or_(
+                Log.user_id == user.id,
+                Log.project_id.in_(db.session.query(shared_project_ids.c.id)),
+            )
+        )
+
+    # Fallback: just return unfiltered (shouldn't happen)
+    return model.query
 
 
 class Project(db.Model):
@@ -18,6 +101,19 @@ class Project(db.Model):
     parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    shared_with: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array of user_ids
+
+    def get_shared_user_ids(self):
+        if not self.shared_with:
+            return []
+        try:
+            return json.loads(self.shared_with)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def set_shared_with(self, value):
+        self.shared_with = json.dumps(value) if value else None
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
@@ -78,6 +174,7 @@ class Task(db.Model):
     recurrence_end: Mapped[date | None] = mapped_column(Date, nullable=True)
     completed_dates: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON array of YYYY-MM-DD
     project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     depends_on_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
     )
@@ -160,6 +257,7 @@ class Log(db.Model):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     task_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
     project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
 
     __table_args__ = (
         db.CheckConstraint(

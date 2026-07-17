@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="w-full max-w-sm bg-surface border border-border rounded-xl p-8 shadow-lg">
+        <h1 class="text-xl font-bold mono text-text mb-2">TaskManager</h1>
+        <p class="text-sm mono text-muted mb-6">Sign in to continue</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-3 rounded-lg border text-sm mono {{ 'bg-red-500/10 border-red-500/30 text-red-400' if category == 'error' else 'bg-green-500/10 border-green-500/30 text-green-400' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {{ csrf_token() }}
+            <div class="mb-4">
+                <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+            <div class="mb-6">
+                <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+            <button type="submit"
+                    class="w-full bg-accent hover:bg-accent/80 text-black font-bold mono text-sm rounded-lg px-4 py-2.5 transition-colors">
+                Sign In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
