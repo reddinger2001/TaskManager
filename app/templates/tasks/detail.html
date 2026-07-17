@@ -125,6 +125,13 @@
                    placeholder="Select or type..."
                    class="w-full px-3 py-2 text-sm mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40">
             <datalist id="assignee-options">
+                <!-- System users first -->
+                {% for u in all_users %}
+                {% if u.id != g.current_user_id %}
+                <option value="{{ u.username }}"></option>
+                {% endif %}
+                {% endfor %}
+                <!-- Then historical assignees (may include non-system people) -->
                 {% for a in assignees %}
                 <option value="{{ a }}"></option>
                 {% endfor %}

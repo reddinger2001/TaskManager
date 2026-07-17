@@ -108,9 +108,12 @@ def detail(project_id):
         search_text += " " + project.description
     related_captures = _find_related_captures(search_text)
 
+    from app.models import User
+
     all_projects = g.scoped_query(Project).order_by(Project.name.asc()).all()
+    all_users = User.query.order_by(User.username).all()
     today_date = date.today()
-    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, today_date=today_date)
+    return render_template("projects/detail.html", project=project, tasks=tasks, related_captures=related_captures, all_projects=all_projects, all_users=all_users, today_date=today_date)
 
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])
@@ -134,6 +137,9 @@ def update(project_id):
         if new_parent_id and project.is_ancestor_of(g.scoped_query(Project).get(new_parent_id)):
             return {"ok": False, "error": "Cannot set parent — would create a circular reference"}, 400
         project.parent_id = new_parent_id
+    if "shared_with" in data:
+        # shared_with is a list of user IDs (integers)
+        project.set_shared_with([int(u) for u in data["shared_with"]])
 
     db.session.commit()
     return {"ok": True}

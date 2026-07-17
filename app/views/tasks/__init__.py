@@ -245,9 +245,12 @@ def _find_related_captures(query_text, exclude_ids=None, limit=5):
 
 @tasks_bp.route("/tasks/<int:task_id>")
 def detail(task_id):
+    from app.models import User
+
     task = g.scoped_query(Task).get_or_404(task_id)
     projects = g.scoped_query(Project).order_by(Project.name).all()
     assignees = sorted(set(t.assignee for t in g.scoped_query(Task).filter(Task.assignee.isnot(None)).all() if t.assignee))
+    all_users = User.query.order_by(User.username).all()
 
     # FTS5-based related captures (inbox tasks matching this task's content)
     search_text = task.title
@@ -268,6 +271,7 @@ def detail(task_id):
         recurrences=RECURRENCES,
         related_captures=related_captures,
         all_tasks=all_tasks,
+        all_users=all_users,
     )
 
 

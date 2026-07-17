@@ -56,6 +56,16 @@ def create_app():
         g.scoped_query = lambda model: scoped_query(model, current_user)
         g.current_user_id = current_user.id
         g.current_user_is_admin = current_user.is_admin
+        g.current_username = current_user.username
+
+    @app.context_processor
+    def inject_user_context():
+        """Make user info available in all templates via template context."""
+        from flask import g
+        return {
+            'current_username': getattr(g, 'current_username', 'anonymous'),
+            'current_user_is_admin': getattr(g, 'current_user_is_admin', False),
+        }
 
     # CSRF protection — only protect POST and DELETE (PATCH is used by Alpine.js API calls)
     app.config["WTF_CSRF_METHODS"] = {"POST", "DELETE"}

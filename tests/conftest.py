@@ -57,6 +57,7 @@ def client(app):
             g.scoped_query = lambda model: scoped_query(model, admin)
             g.current_user_id = admin.id
             g.current_user_is_admin = True
+            g.current_username = "admin"
 
         handlers2 = [h for h in app.before_request_funcs.get(None, []) if h.__name__ != "set_scoped_query"]
         handlers2.append(setup_test_user)

@@ -516,3 +516,60 @@ def import_db():
             os.remove(backup_path)
         flash(f"Import failed: {e}", "error")
     return redirect("/settings")
+
+# --- User Management ---
+
+@main_bp.route("/settings/users", methods=["GET", "POST"])
+def settings_users():
+    from flask_login import current_user
+    from app.models import User
+
+    if not current_user.is_admin:
+        flash("Only administrators can manage users", "error")
+        return redirect(url_for("main.settings"))
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "create":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            is_admin = request.form.get("is_admin") == "on"
+
+            if not username:
+                flash("Username is required", "error")
+            elif not password:
+                flash("Password is required", "error")
+            elif User.query.filter_by(username=username).first():
+                flash(f"User \"{username}\" already exists", "error")
+            else:
+                user = User(username=username, is_admin=is_admin)
+                user.set_password(password)
+                db.session.add(user)
+                db.session.commit()
+                flash(f"User \"{username}\" created", "success")
+
+        elif action == "reset_password":
+            user_id = int(request.form.get("user_id", 0))
+            new_password = request.form.get("new_password", "")
+            if not new_password:
+                flash("Password cannot be empty", "error")
+            else:
+                target = db.session.get(User, user_id)
+                if target:
+                    target.set_password(new_password)
+                    db.session.commit()
+                    flash(f"Password reset for \"{target.username}\"", "success")
+
+        elif action == "change_own_password":
+            new_password = request.form.get("new_password", "")
+            if not new_password:
+                flash("Password cannot be empty", "error")
+            else:
+                current_user.set_password(new_password)
+                db.session.commit()
+                flash("Your password has been changed", "success")
+
+        return redirect(url_for("main.settings_users"))
+
+    users = User.query.order_by(User.is_admin.desc(), User.username).all()
+    return render_template("settings/users.html", users=users)

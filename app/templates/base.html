@@ -112,7 +112,7 @@
             <div class="flex items-center gap-4">
                 <a href="/help/" class="px-2 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted hover:text-text transition-colors">Help</a>
                 <a href="/settings" class="px-2 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted hover:text-text transition-colors">Settings</a>
-                <span class="text-xs mono text-muted">{{ current_user.username }}</span>
+                <span class="text-xs mono text-muted">{{ current_username }}</span>
                 <a href="/logout" class="px-2 py-1.5 text-xs font-medium mono uppercase tracking-wider text-muted hover:text-red-400 transition-colors">Logout</a>
                 <form action="/search" method="get" class="relative">
                     <input type="text" name="q" placeholder="Search..." class="w-56 pl-8 pr-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text placeholder-muted focus:outline-none focus:border-accent/40 transition-colors">

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <h1 class="text-lg font-bold mono text-text">User Management</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-3 rounded-lg border text-sm mono {{ 'bg-red-500/10 border-red-500/30 text-red-400' if category == 'error' else 'bg-green-500/10 border-green-500/30 text-green-400' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Change own password (everyone) -->
+    <div class="bg-surface border border-border rounded-xl p-6">
+        <h2 class="text-sm font-bold mono uppercase tracking-wider text-muted mb-4">Change Your Password</h2>
+        <form method="POST" class="flex gap-3 items-end">
+            <input type="hidden" name="action" value="change_own_password">
+            {{ csrf_token() }}
+            <div class="flex-1">
+                <label class="block text-xs mono text-muted mb-1" for="own_password">New Password</label>
+                <input type="password" id="own_password" name="new_password" required
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+            <button type="submit" class="bg-accent hover:bg-accent/80 text-black font-bold mono text-xs rounded-lg px-4 py-2 transition-colors">
+                Update
+            </button>
+        </form>
+    </div>
+
+    {% if current_user.is_admin %}
+
+    <!-- Create user (admin only) -->
+    <div class="bg-surface border border-border rounded-xl p-6">
+        <h2 class="text-sm font-bold mono uppercase tracking-wider text-muted mb-4">Create User</h2>
+        <form method="POST" class="flex flex-wrap gap-3 items-end">
+            <input type="hidden" name="action" value="create">
+            {{ csrf_token() }}
+            <div class="min-w-[140px]">
+                <label class="block text-xs mono text-muted mb-1" for="username">Username</label>
+                <input type="text" id="username" name="username" required
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+            <div class="min-w-[140px]">
+                <label class="block text-xs mono text-muted mb-1" for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+            <div class="flex items-center gap-2 pb-2">
+                <input type="checkbox" id="is_admin" name="is_admin"
+                       class="rounded border-border bg-surface text-accent focus:ring-accent/30">
+                <label for="is_admin" class="text-xs mono text-muted">Admin</label>
+            </div>
+            <button type="submit" class="bg-accent hover:bg-accent/80 text-black font-bold mono text-xs rounded-lg px-4 py-2 transition-colors">
+                Create
+            </button>
+        </form>
+    </div>
+
+    <!-- User list (admin only) -->
+    <div class="bg-surface border border-border rounded-xl p-6">
+        <h2 class="text-sm font-bold mono uppercase tracking-wider text-muted mb-4">Users</h2>
+        <div class="space-y-2">
+            {% for user in users %}
+            <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-surface/50 border border-border/50">
+                <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs mono font-bold text-accent">
+                        {{ user.username[0].upper() }}
+                    </span>
+                    <div>
+                        <span class="text-sm mono text-text">{{ user.username }}</span>
+                        {% if user.is_admin %}
+                        <span class="ml-2 px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] mono">ADMIN</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <form method="POST" class="flex items-center gap-2">
+                    <input type="hidden" name="action" value="reset_password">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    {{ csrf_token() }}
+                    <input type="password" name="new_password" placeholder="New password"
+                           class="w-36 bg-surface border border-border rounded px-2 py-1 text-xs mono text-text focus:outline-none focus:ring-1 focus:ring-accent/30">
+                    <button type="submit" class="text-xs mono text-muted hover:text-accent transition-colors px-2 py-1">
+                        Reset
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
