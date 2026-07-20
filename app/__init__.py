@@ -70,12 +70,15 @@ def create_app():
             g.current_username = ""
 
     @app.context_processor
-    def inject_user_context():
-        """Make user info available in all templates via template context."""
+    def inject_context():
+        """Make user info and app settings available in all templates."""
         from flask import g
+        from app.models import AppSettings, Project
         return {
             'current_username': getattr(g, 'current_username', 'anonymous'),
             'current_user_is_admin': getattr(g, 'current_user_is_admin', False),
+            'projects': Project.query.order_by(Project.name).all() if g.current_user_id else [],
+            'priorities': AppSettings.get().get_priorities(),
         }
 
     # CSRF protection — only protect POST and DELETE (PATCH is used by Alpine.js API calls)
