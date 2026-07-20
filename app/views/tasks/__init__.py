@@ -351,3 +351,48 @@ def delete(task_id):
     db.session.commit()
     flash(f"Task \"{title}\" deleted")
     return redirect(url_for("tasks.list_tasks"))
+
+
+@tasks_bp.route("/tasks/bulk-delete", methods=["POST"])
+def bulk_delete():
+    """Delete multiple tasks at once."""
+    task_ids = [int(tid) for tid in request.form.getlist("task_ids")]
+    count = 0
+    for tid in task_ids:
+        try:
+            task = scoped_get(Task, tid, g.current_user)
+            db.session.delete(task)
+            count += 1
+        except Exception:
+            pass  # Skip tasks not in scope
+    db.session.commit()
+    flash(f"{count} task(s) deleted")
+    return redirect(url_for("tasks.list_tasks"))
+
+
+@tasks_bp.route("/tasks/bulk-status", methods=["POST"])
+def bulk_status():
+    """Change status of multiple tasks at once."""
+    task_ids = [int(tid) for tid in request.form.getlist("task_ids")]
+    new_status = request.form.get("status", "backlog")
+    if new_status not in STATUSES:
+        flash("Invalid status", "error")
+        return redirect(url_for("tasks.list_tasks"))
+
+    count = 0
+    for tid in task_ids:
+        try:
+            task = scoped_get(Task, tid, g.current_user)
+            if task.status == new_status:
+                continue
+            task.status = new_status
+            if new_status == "done":
+                task.completed_at = datetime.now(timezone.utc)
+            else:
+                task.completed_at = None
+            count += 1
+        except Exception:
+            pass  # Skip tasks not in scope
+    db.session.commit()
+    flash(f"{count} task(s) updated to {new_status}")
+    return redirect(url_for("tasks.list_tasks"))

@@ -10,7 +10,31 @@
 {%- endmacro %}
 
 {% block content %}
-<div x-data="{ showCapture: false, showFilters: false }">
+<div x-data="{ showCapture: false, showFilters: false, selectedTasks: [], allSelected: false }">
+
+<!-- Bulk action bar -->
+<div x-show="selectedTasks.length > 0" x-cloak
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-panel border border-border rounded-lg px-5 py-3 flex items-center gap-4 shadow-xl">
+    <span class="text-xs mono text-muted"><span x-text="selectedTasks.length"></span> selected</span>
+    <form method="post" action="/tasks/bulk-status" class="flex items-center gap-2">
+        <select name="status" class="px-2 py-1 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+            {% for s in statuses %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="px-3 py-1 text-xs mono uppercase tracking-wider bg-accent/20 text-accent rounded hover:bg-accent/30 transition-colors">Set Status</button>
+        <template x-for="taskId in selectedTasks">
+            <input type="hidden" name="task_ids" :value="taskId">
+        </template>
+    </form>
+    <form method="post" action="/tasks/bulk-delete" class="flex items-center gap-2">
+        <button type="submit" class="px-3 py-1 text-xs mono uppercase tracking-wider bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors" onclick="return confirm('Delete selected tasks? This cannot be undone.')">Delete</button>
+        <template x-for="taskId in selectedTasks">
+            <input type="hidden" name="task_ids" :value="taskId">
+        </template>
+    </form>
+    <button @click="selectedTasks = []" class="text-xs mono text-muted hover:text-text transition-colors">✕</button>
+</div>
 
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
@@ -192,7 +216,11 @@
     <table class="w-full text-sm">
         <thead>
             <tr class="border-b border-border text-xs mono uppercase tracking-wider text-muted">
-                <th class="text-left px-4 py-2.5 w-8"></th>
+                <th class="px-4 py-2.5 w-8">
+                    <input type="checkbox" x-model="allSelected"
+                           @change="if(allSelected) { selectedTasks = tasksList.map(t=>t.id) } else { selectedTasks = [] }"
+                           class="w-3 h-3 rounded accent-accent cursor-pointer">
+                </th>
                 <th class="text-left px-4 py-2.5">
                     <a href="?sort=title&order={% if sort_field == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&q={{ current_q }}&status={{ current_status }}&priority={{ current_priority }}&project_id={{ current_project_id }}&assignee={{ current_assignee }}&tag={{ current_tag }}&date_field={{ current_date_field }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}"
                        class="hover:text-text transition-colors">
@@ -231,45 +259,51 @@
                 </th>
             </tr>
         </thead>
-        <tbody>
+        <tbody x-data="{ tasksList: [{% for t in tasks %}{ id: {{ t.id }} }{% if not loop.last %},{% endif %}{% endfor %}] }">
             {% for t in tasks %}
-            <a href="/tasks/{{ t.id }}" class="block hover:bg-surface/50 transition-colors">
-                <tr>
-                    <!-- Status dot -->
-                    <td class="px-4 py-2.5">
-                        <span class="w-2 h-2 rounded-full inline-block"
+            <tr class="hover:bg-surface/50 transition-colors group">
+                <!-- Checkbox -->
+                <td class="px-4 py-2.5">
+                    <input type="checkbox" :value="{{ t.id }}"
+                           x-model="selectedTasks"
+                           class="w-3 h-3 rounded accent-accent cursor-pointer">
+                </td>
+                <!-- Rest of row wrapped in link -->
+                <td class="px-4 py-2.5" colspan="6">
+                    <a href="/tasks/{{ t.id }}" class="flex items-center gap-3 block">
+                        <!-- Status dot -->
+                        <span class="w-2 h-2 rounded-full inline-block flex-shrink-0"
                               style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
-                    </td>
-                    <!-- Title -->
-                    <td class="px-4 py-2.5 text-text {% if t.status == 'done' %}line-through text-muted{% endif %}">
-                        {{ t.title }}
-                    </td>
-                    <!-- Status -->
-                    <td class="px-4 py-2.5">
-                        <span class="text-[10px] mono uppercase tracking-wider"
+                        <!-- Title -->
+                        <span class="text-text {% if t.status == 'done' %}line-through text-muted{% endif %}">{{ t.title }}</span>
+
+                        <!-- Status -->
+                        <span class="text-[10px] mono uppercase tracking-wider flex-shrink-0"
                               style="color: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};">
                             {{ t.status }}
                         </span>
-                    </td>
-                    <!-- Priority -->
-                    <td class="px-4 py-2.5">
+
+                        <!-- Priority -->
                         {% if t.priority %}
-                        <span class="px-1.5 py-0.5 text-[10px] mono font-bold rounded"
+                        <span class="px-1.5 py-0.5 text-[10px] mono font-bold rounded flex-shrink-0"
                               style="background: {% if t.priority == 'P0' %}#ff5252{% elif t.priority == 'P1' %}#ff8a65{% elif t.priority == 'P2' %}#ffd740{% else %}#3a4a5c{% endif %}; color: #0a0e17;">
                             {{ t.priority }}
                         </span>
                         {% else %}
-                        <span class="text-muted text-xs">—</span>
+                        <span class="text-muted text-xs flex-shrink-0">—</span>
                         {% endif %}
-                    </td>
-                    <!-- Due -->
-                    <td class="px-4 py-2.5 text-xs mono {% if t.due_date and t.due_date < today_date and t.status != 'done' %}text-red-400 font-bold{% else %}text-muted{% endif %}">{{ t.due_date or '—' }}</td>
-                    <!-- Assignee -->
-                    <td class="px-4 py-2.5 text-xs text-muted">{{ t.assignee or '—' }}</td>
-                    <!-- Project -->
-                    <td class="px-4 py-2.5 text-xs text-muted">{{ t.project.name if t.project else '—' }}</td>
-                </tr>
-            </a>
+
+                        <!-- Due -->
+                        <span class="text-xs mono flex-shrink-0 {% if t.due_date and t.due_date < today_date and t.status != 'done' %}text-red-400 font-bold{% else %}text-muted{% endif %}">{{ t.due_date or '—' }}</span>
+
+                        <!-- Assignee -->
+                        <span class="text-xs text-muted flex-shrink-0">{{ t.assignee or '—' }}</span>
+
+                        <!-- Project -->
+                        <span class="text-xs text-muted flex-shrink-0">{{ t.project.name if t.project else '—' }}</span>
+                    </a>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
