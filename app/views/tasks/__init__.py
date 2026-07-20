@@ -356,6 +356,7 @@ def delete(task_id):
 @tasks_bp.route("/tasks/bulk-delete", methods=["POST"])
 def bulk_delete():
     """Delete multiple tasks at once."""
+    from app.models import scoped_get
     task_ids = [int(tid) for tid in request.form.getlist("task_ids")]
     count = 0
     for tid in task_ids:
@@ -373,6 +374,7 @@ def bulk_delete():
 @tasks_bp.route("/tasks/bulk-status", methods=["POST"])
 def bulk_status():
     """Change status of multiple tasks at once."""
+    from app.models import scoped_get
     task_ids = [int(tid) for tid in request.form.getlist("task_ids")]
     new_status = request.form.get("status", "backlog")
     if new_status not in STATUSES:
