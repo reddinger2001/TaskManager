@@ -1,13 +1,13 @@
 from flask import Blueprint, g, redirect, render_template, request
 
-from app.models import Log, Project, Task, db
+from app.models import Log, Project, Task, db, scoped_get
 
 logs_bp = Blueprint("logs", __name__)
 
 
 @logs_bp.route("/projects/<int:project_id>/logs", methods=["POST"])
 def create_project_log(project_id):
-    project = g.scoped_query(Project).get_or_404(project_id)
+    project = scoped_get(Project, project_id, g.current_user)
     title = request.form.get("title", "").strip()
     notes = request.form.get("notes", "").strip() or None
 
@@ -23,7 +23,7 @@ def create_project_log(project_id):
 
 @logs_bp.route("/tasks/<int:task_id>/logs", methods=["POST"])
 def create_task_log(task_id):
-    task = g.scoped_query(Task).get_or_404(task_id)
+    task = scoped_get(Task, task_id, g.current_user)
     title = request.form.get("title", "").strip()
     notes = request.form.get("notes", "").strip() or None
 
@@ -39,7 +39,7 @@ def create_task_log(task_id):
 
 @logs_bp.route("/logs/<int:log_id>")
 def log_detail(log_id):
-    log = g.scoped_query(Log).get_or_404(log_id)
+    log = scoped_get(Log, log_id, g.current_user)
     return render_template("logs/detail.html", log=log)
 
 
@@ -48,7 +48,7 @@ def delete(log_id):
     # Handle POST with _method=DELETE (browsers can't send DELETE directly)
     if request.method == "POST" and request.form.get("_method") != "DELETE":
         return redirect(request.referrer or "/")
-    log = g.scoped_query(Log).get_or_404(log_id)
+    log = scoped_get(Log, log_id, g.current_user)
     db.session.delete(log)
     db.session.commit()
 

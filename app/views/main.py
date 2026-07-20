@@ -31,7 +31,9 @@ def index():
 
     # Priority counts
     priority_counts = {}
-    for p in ["P0", "P1", "P2", "P3"]:
+    from app.models import AppSettings
+    priorities = AppSettings.get().get_priorities()
+    for p in priorities:
         priority_counts[p] = len([t for t in tasks if t.priority == p])
     total_priority = sum(priority_counts.values()) or 1  # avoid div by zero
 
@@ -57,12 +59,6 @@ def index():
     inbox = sorted(
         [t for t in tasks if t.project_id is None],
         key=lambda t: -t.created_at.timestamp(),
-    )
-
-    # Delegated
-    delegated = sorted(
-        [t for t in tasks if t.status == "delegated" and t.assignee],
-        key=lambda t: (t.assignee or "", -t.created_at.timestamp()),
     )
 
     # Recently done
@@ -97,11 +93,11 @@ def index():
         blocked_count=blocked_count,
         done_count=done_count,
         priority_counts=priority_counts,
+        priorities=priorities,
         overdue=overdue,
         currently_active=currently_active,
         due_this_week=due_this_week,
         inbox=inbox,
-        delegated=delegated,
         done_tasks=done_tasks,
         project_health=project_health,
         projects=projects_all,
@@ -403,7 +399,7 @@ def calendar_events():
     color_map = {
         "backlog": "#6b7280",
         "active": "#00e5ff",
-        "delegated": "#7c4dff",
+
         "blocked": "#ff5252",
         "done": "#69f0ae",
     }
@@ -467,12 +463,35 @@ def _generate_recurring_events(task, color_map):
 
 @main_bp.route("/settings")
 def settings():
-    from app.models import db
+    from app.models import AppSettings, db
     import os
     db_path = app.config.get("SQLALCHEMY_DATABASE_URI", "").replace("sqlite:///", "")
     db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
-    return render_template("settings.html", db_path=db_path, db_size=db_size)
+    priorities = AppSettings.get().get_priorities()
+    return render_template("settings.html", db_path=db_path, db_size=db_size, priorities=priorities)
 
+
+
+@main_bp.route("/settings/priorities", methods=["POST"])
+def settings_priorities():
+    """Update priority levels — admin only."""
+    if not g.current_user_is_admin:
+        flash("Only admins can change priority levels", "error")
+        return redirect(url_for("main.settings"))
+
+    from app.models import AppSettings, db
+    priorities_raw = request.form.get("priorities", "").strip()
+    priorities = [p.strip() for p in priorities_raw.split(",") if p.strip()]
+
+    if not priorities:
+        flash("You must define at least one priority level", "error")
+        return redirect(url_for("main.settings"))
+
+    settings = AppSettings.get()
+    settings.set_priorities(priorities)
+    db.session.commit()
+    flash(f"Priorities updated: {', '.join(priorities)}", "success")
+    return redirect(url_for("main.settings"))
 
 @main_bp.route("/settings/export-db", methods=["POST"])
 def export_db():
@@ -519,16 +538,32 @@ def import_db():
 
 # --- User Management ---
 
+def _activity_log(title, notes):
+    """Create an activity log entry under the System project."""
+    from app.models import Log
+    from app.services.seed import get_system_project_id
+
+    system_proj_id = get_system_project_id(app)
+    if system_proj_id:
+        log = Log(
+            title=title,
+            notes=notes,
+            project_id=system_proj_id,
+            user_id=g.current_user_id,
+        )
+        db.session.add(log)
+
+
 @main_bp.route("/settings/users", methods=["GET", "POST"])
 def settings_users():
     from app.models import User
 
-    if not g.current_user_is_admin:
-        flash("Only administrators can manage users", "error")
-        return redirect(url_for("main.settings"))
-
     if request.method == "POST":
         action = request.form.get("action", "")
+        # Non-admins can only change their own password
+        if not g.current_user_is_admin and action != "change_own_password":
+            flash("Only administrators can manage users", "error")
+            return redirect(url_for("main.settings"))
         if action == "create":
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "")
@@ -544,6 +579,7 @@ def settings_users():
                 user = User(username=username, is_admin=is_admin)
                 user.set_password(password)
                 db.session.add(user)
+                _activity_log("User created", f"Admin {g.current_username} created user \"{username}\" ({'admin' if is_admin else 'regular'})")
                 db.session.commit()
                 flash(f"User \"{username}\" created", "success")
 
@@ -556,6 +592,7 @@ def settings_users():
                 target = db.session.get(User, user_id)
                 if target:
                     target.set_password(new_password)
+                    _activity_log("Password reset", f"Admin {g.current_username} reset password for \"{target.username}\"")
                     db.session.commit()
                     flash(f"Password reset for \"{target.username}\"", "success")
 
@@ -567,6 +604,7 @@ def settings_users():
                 from app.models import User
                 me = db.session.get(User, g.current_user_id)
                 me.set_password(new_password)
+                _activity_log("Password changed", f"User {g.current_username} changed their own password")
                 db.session.commit()
                 flash("Your password has been changed", "success")
 
@@ -576,8 +614,9 @@ def settings_users():
                 target = db.session.get(User, user_id)
                 if target:
                     target.is_admin = not target.is_admin
-                    db.session.commit()
                     role = "admin" if target.is_admin else "regular"
+                    _activity_log("Role changed", f"Admin {g.current_username} made \"{target.username}\" a {role} user")
+                    db.session.commit()
                     flash(f"{target.username} is now a {role} user", "success")
             else:
                 flash("You cannot change your own admin status", "error")
@@ -592,6 +631,7 @@ def settings_users():
                     Task.query.filter_by(user_id=user_id).update({Task.user_id: g.current_user_id}, synchronize_session=False)
                     Project.query.filter_by(user_id=user_id).update({Project.user_id: g.current_user_id}, synchronize_session=False)
                     Log.query.filter_by(user_id=user_id).update({Log.user_id: g.current_user_id}, synchronize_session=False)
+                    _activity_log("User deleted", f"Admin {g.current_username} deleted \"{target.username}\" — items reassigned to {g.current_username}")
                     db.session.delete(target)
                     db.session.commit()
                     flash(f"User \"{target.username}\" deleted — items reassigned to you", "success")

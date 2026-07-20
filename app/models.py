@@ -35,6 +35,57 @@ class User(UserMixin, db.Model):
     def __repr__(self):        return f"<User {self.username}>"
 
 
+def scoped_get(model, model_id, user):
+    """Get a single object by ID, respecting the current user's scope.
+
+    Returns the object if visible to the user, or None if not in scope.
+    Use this instead of scoped_query(Model).get_or_404(id) which breaks
+    when the scoped query has filter criteria (SQLAlchemy doesn't allow
+    .get() on filtered queries).
+    """
+    from flask import abort
+    obj = db.session.get(model, model_id)
+    if obj is None:
+        abort(404)
+    # Admin sees everything
+    if user.is_admin:
+        return obj
+    # Check scope: is this object visible to the user?
+    query = scoped_query(model, user)
+    if model.query.filter(model.id == model_id).first() is not None:
+        # Object exists — check if it's in scope by testing the scoped filter
+        pass
+    # Simpler approach: just test if the object appears in a scoped list
+    if model == Task:
+        if obj.user_id == user.id or obj.assignee and obj.assignee.lower() == user.username.lower():
+            return obj
+        if obj.project_id:
+            proj = db.session.get(Project, obj.project_id)
+            if proj and _user_can_see_project(proj, user):
+                return obj
+    elif model == Project:
+        if _user_can_see_project(obj, user):
+            return obj
+    elif model == Log:
+        if obj.user_id == user.id:
+            return obj
+        if obj.project_id:
+            proj = db.session.get(Project, obj.project_id)
+            if proj and _user_can_see_project(proj, user):
+                return obj
+    abort(404)
+
+
+def _user_can_see_project(project, user):
+    """Check if a non-admin user can see a project."""
+    if project.user_id == user.id:
+        return True
+    shared = project.get_shared_user_ids()
+    if user.id in shared:
+        return True
+    return False
+
+
 def scoped_query(model, user):
     """Return a query filtered by the current user's scope.
 
@@ -59,7 +110,7 @@ def scoped_query(model, user):
 
     if model == Task:
         from sqlalchemy import or_
-        # User's own tasks + tasks in projects shared with them
+        # User's own tasks + tasks in shared projects + tasks assigned to them
         shared_project_ids = db.session.query(Project.id).filter(
             Project.user_id != user.id,
             Project.shared_with.isnot(None),
@@ -69,6 +120,7 @@ def scoped_query(model, user):
             or_(
                 Task.user_id == user.id,
                 Task.project_id.in_(db.session.query(shared_project_ids.c.id)),
+                Task.assignee.ilike(f"%{user.username}%"),
             )
         )
 
@@ -247,6 +299,38 @@ class Task(db.Model):
 
     def __repr__(self):
         return f"<Task {self.title}>"
+
+
+class AppSettings(db.Model):
+    """Single-row settings table for app-wide configuration."""
+    __tablename__ = "app_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    priorities: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array of priority strings
+
+    def get_priorities(self):
+        if not self.priorities:
+            return ["P0", "P1", "P2"]
+        try:
+            return json.loads(self.priorities)
+        except (json.JSONDecodeError, TypeError):
+            return ["P0", "P1", "P2"]
+
+    def set_priorities(self, value):
+        self.priorities = json.dumps(value) if value else None
+
+    @staticmethod
+    def get():
+        """Return the single settings row, creating it if needed."""
+        settings = AppSettings.query.first()
+        if not settings:
+            settings = AppSettings()
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+
+    def __repr__(self):
+        return f"<AppSettings priorities={self.get_priorities()}>"
 
 
 class Log(db.Model):

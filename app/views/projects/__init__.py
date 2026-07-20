@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, current_app as app, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import text
 
 from app.models import Project, Task, db
@@ -94,7 +94,8 @@ def create():
 
 @projects_bp.route("/projects/<int:project_id>")
 def detail(project_id):
-    project = g.scoped_query(Project).get_or_404(project_id)
+    from app.models import scoped_get
+    project = scoped_get(Project, project_id, g.current_user)
     # Include tasks from this project and all child projects
     descendant_ids = project.get_descendant_ids()
     tasks = g.scoped_query(Task).filter(
@@ -118,7 +119,8 @@ def detail(project_id):
 
 @projects_bp.route("/projects/<int:project_id>", methods=["PATCH"])
 def update(project_id):
-    project = g.scoped_query(Project).get_or_404(project_id)
+    from app.models import scoped_get
+    project = scoped_get(Project, project_id, g.current_user)
     data = request.get_json(silent=True) or {}
 
     if "name" in data:
@@ -134,12 +136,16 @@ def update(project_id):
     if "parent_id" in data:
         new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
         # Prevent circular references: can't set parent to self or a descendant
-        if new_parent_id and project.is_ancestor_of(g.scoped_query(Project).get(new_parent_id)):
+        if new_parent_id and project.is_ancestor_of(db.session.get(Project, new_parent_id)):
             return {"ok": False, "error": "Cannot set parent — would create a circular reference"}, 400
         project.parent_id = new_parent_id
     if "shared_with" in data:
         # shared_with is a list of user IDs (integers)
         project.set_shared_with([int(u) for u in data["shared_with"]])
+        from app.views.main import _activity_log
+        shared_names = [u.username for u in User.query.filter(User.id.in_([int(u) for u in data["shared_with"]])).all()]
+        if shared_names:
+            _activity_log("Project shared", f"{g.current_username} shared \"{project.name}\" with: {', '.join(shared_names)}")
 
     db.session.commit()
     return {"ok": True}
@@ -153,7 +159,8 @@ def delete(project_id):
         if _method != "DELETE":
             return redirect(url_for("projects.detail", project_id=project_id))
 
-    project = g.scoped_query(Project).get_or_404(project_id)
+    from app.models import scoped_get
+    project = scoped_get(Project, project_id, g.current_user)
     name = project.name
     db.session.delete(project)
     db.session.commit()

@@ -70,12 +70,11 @@ class TestDashboardWithData:
         # Blocked tasks appear in the overdue/at-risk section or via status
         assert b"blocked" in resp.data.lower() or b"On Fire" in resp.data
 
-    def test_delegated_groups_by_assignee(self, client, populated_db):
-        resp = client.get("/")
+    def test_assigned_tasks_visible_on_board(self, client, populated_db):
+        """Tasks with assignees are visible on the board and filterable."""
+        resp = client.get("/board")
         assert b"Sarah" in resp.data
-        assert b"Mike" in resp.data
         assert b"Review vendor contracts" in resp.data
-        assert b"Write API docs" in resp.data
 
     def test_active_work_shows_active_tasks(self, client, populated_db):
         resp = client.get("/")
@@ -118,9 +117,8 @@ class TestDashboardWithData:
         assert b"Currently Active" in resp.data or b"Active" in resp.data
 
     def test_assignee_avatars_present(self, client, populated_db):
-        """Assignee names appear for delegated tasks."""
-        resp = client.get("/")
-        # Delegated section shows assignee names
+        """Assignee names appear on the Kanban board."""
+        resp = client.get("/board")
         assert b"Sarah" in resp.data or b"Mike" in resp.data
 
     def test_due_dates_displayed(self, client, populated_db):

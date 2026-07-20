@@ -20,7 +20,7 @@
         <h2 class="text-sm font-bold mono uppercase tracking-wider text-muted mb-4">Change Your Password</h2>
         <form method="POST" class="flex gap-3 items-end">
             <input type="hidden" name="action" value="change_own_password">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex-1">
                 <label class="block text-xs mono text-muted mb-1" for="own_password">New Password</label>
                 <input type="password" id="own_password" name="new_password" required
@@ -32,14 +32,14 @@
         </form>
     </div>
 
-    {% if current_user.is_admin %}
+    {% if current_user_is_admin %}
 
     <!-- Create user (admin only) -->
     <div class="bg-surface border border-border rounded-xl p-6">
         <h2 class="text-sm font-bold mono uppercase tracking-wider text-muted mb-4">Create User</h2>
         <form method="POST" class="flex flex-wrap gap-3 items-end">
             <input type="hidden" name="action" value="create">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="min-w-[140px]">
                 <label class="block text-xs mono text-muted mb-1" for="username">Username</label>
                 <input type="text" id="username" name="username" required
@@ -83,7 +83,7 @@
                     <form method="POST" class="flex items-center gap-1">
                         <input type="hidden" name="action" value="toggle_admin">
                         <input type="hidden" name="user_id" value="{{ user.id }}">
-                        {{ csrf_token() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-xs mono text-muted hover:text-yellow-400 transition-colors px-2 py-1"
                                 title="{% if user.is_admin %}Remove admin{% else %}Make admin{% endif %}">
                             {% if user.is_admin %}👑{% else %}🔓{% endif %}
@@ -93,7 +93,7 @@
                     <form method="POST" class="flex items-center gap-2">
                         <input type="hidden" name="action" value="reset_password">
                         <input type="hidden" name="user_id" value="{{ user.id }}">
-                        {{ csrf_token() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="password" name="new_password" placeholder="New password"
                                class="w-36 bg-surface border border-border rounded px-2 py-1 text-xs mono text-text focus:outline-none focus:ring-1 focus:ring-accent/30">
                         <button type="submit" class="text-xs mono text-muted hover:text-accent transition-colors px-2 py-1">
@@ -105,7 +105,7 @@
                           onsubmit="return confirm('Delete {{ user.username }}? Their items will be reassigned to you.')">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="user_id" value="{{ user.id }}">
-                        {{ csrf_token() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-xs mono text-muted hover:text-red-400 transition-colors px-2 py-1" title="Delete user">
                             🗑️
                         </button>

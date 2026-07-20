@@ -2,9 +2,9 @@
 
 {% block content %}
 <div class="min-h-[60vh] flex items-center justify-center">
-    <div class="w-full max-w-sm bg-surface border border-border rounded-xl p-8 shadow-lg">
-        <h1 class="text-xl font-bold mono text-text mb-2">TaskManager</h1>
-        <p class="text-sm mono text-muted mb-6">Sign in to continue</p>
+    <div class="w-full max-w-md bg-surface border border-border rounded-xl p-8 shadow-lg">
+        <h1 class="text-xl font-bold mono text-text mb-1">TaskManager</h1>
+        <p class="text-sm mono text-muted mb-6">Set up your account to get started</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -18,19 +18,36 @@
 
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <div class="mb-4">
                 <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="username">Username</label>
                 <input type="text" id="username" name="username" required autofocus
                        class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
             </div>
-            <div class="mb-6">
+
+            <div class="mb-4">
                 <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="password">Password</label>
-                <input type="password" id="password" name="password" required
+                <input type="password" id="password" name="password" required minlength="4"
                        class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
             </div>
+
+            <div class="mb-4">
+                <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="4"
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs mono uppercase tracking-wider text-muted mb-1.5" for="priorities">Priority Levels</label>
+                <input type="text" id="priorities" name="priorities" value="{{ priorities }}" required
+                       placeholder="P0, P1, P2"
+                       class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-text focus:outline-none focus:ring-2 focus:ring-accent/30">
+                <p class="text-[11px] mono text-muted mt-1.5">Comma-separated list. E.g. "P0, P1, P2" or "Critical, High, Low"</p>
+            </div>
+
             <button type="submit"
                     class="w-full bg-accent hover:bg-accent/80 text-black font-bold mono text-sm rounded-lg px-4 py-2.5 transition-colors">
-                Sign In
+                Create Account
             </button>
         </form>
     </div>

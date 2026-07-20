@@ -188,6 +188,40 @@ class TestUserManagement:
             assert admin.check_password("newadminpass")
 
 
+# --- Non-admin user can access settings/users and change own password ---
+
+class TestNonAdminPasswordChange:
+    def test_non_admin_can_access_settings_users(self, app, raw_client):
+        uid = _add_user(app, "regular_user", "pass123")
+        raw_client.post("/login", data={"username": "regular_user", "password": "pass123"}, follow_redirects=True)
+        r = raw_client.get("/settings/users")
+        assert r.status_code == 200
+        assert b"Change Your Password" in r.data
+        # Admin-only sections should not be visible
+        assert b"Create User" not in r.data
+
+    def test_non_admin_can_change_own_password(self, app, raw_client):
+        uid = _add_user(app, "regular_user2", "oldpass")
+        raw_client.post("/login", data={"username": "regular_user2", "password": "oldpass"}, follow_redirects=True)
+        r = raw_client.post("/settings/users", data={
+            "action": "change_own_password",
+            "new_password": "newpass",
+        }, follow_redirects=True)
+        assert b"changed" in r.data.lower()
+        with app.app_context():
+            user = User.query.filter_by(username="regular_user2").first()
+            assert user.check_password("newpass")
+
+    def test_non_admin_cannot_create_user(self, app, raw_client):
+        uid = _add_user(app, "regular_user3", "pass123")
+        raw_client.post("/login", data={"username": "regular_user3", "password": "pass123"}, follow_redirects=True)
+        r = raw_client.post("/settings/users", data={
+            "action": "create",
+            "username": "hacker",
+            "password": "hack",
+        }, follow_redirects=True)
+        assert b"only administrators" in r.data.lower()
+
 # --- Scoped Query Tests (real login via raw_client) ---
 
 class TestScopedQuery:
@@ -240,6 +274,26 @@ class TestScopedQuery:
         raw_client.post("/login", data={"username": "private_user", "password": "pass"}, follow_redirects=True)
         r = raw_client.get("/projects")
         assert b"Private Project" not in r.data
+
+    def test_assigned_task_visible_to_assignee(self, app, raw_client):
+        """A task assigned to a user should be visible even if they don't own the project."""
+        with app.app_context():
+            admin_id = User.query.filter_by(username="admin").first().id
+        pid = _add_project(app, "Admin Project", admin_id)
+        tid = _add_task(app, "Assigned Task", admin_id, project_id=pid)
+        uid = _add_user(app, "sarah", "pass")
+        with app.app_context():
+            task = Task.query.get(tid)
+            task.assignee = "sarah"
+            task.status = "delegated"
+            db.session.commit()
+
+        raw_client.post("/login", data={"username": "sarah", "password": "pass"}, follow_redirects=True)
+        r = raw_client.get("/tasks")
+        assert b"Assigned Task" in r.data
+        # But the project itself should not be visible (only the assigned task)
+        r2 = raw_client.get("/projects")
+        assert b"Admin Project" not in r2.data
 
 
 # --- Dashboard Tests ---

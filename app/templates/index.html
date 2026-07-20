@@ -31,7 +31,7 @@
     <!-- ROW 1.5: Priority Strip -->
     <div class="flex items-center gap-2 mb-6 px-1">
         <span class="text-[10px] mono uppercase tracking-wider text-muted mr-2">Priority:</span>
-        {% for p in ["P0","P1","P2","P3"] %}
+        {% for p in priorities %}
         <span class="text-[10px] mono font-bold {% if p == 'P0' %}text-red-400{% elif p == 'P1' %}text-amber-400{% elif p == 'P2' %}text-accent{% else %}text-green-400{% endif %} w-3">{{ p }}</span>
         <div class="w-16 h-1.5 bg-bg rounded-full overflow-hidden">
             <div class="h-full rounded-full {% if p == 'P0' %}bg-red-500/40{% elif p == 'P1' %}bg-amber-500/40{% elif p == 'P2' %}bg-accent/40{% else %}bg-green-500/40{% endif %}"
@@ -184,35 +184,6 @@
                 <div class="border border-dashed border-green-500/20 rounded-lg p-5 text-center">
                     <svg class="w-8 h-8 mx-auto mb-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <p class="text-xs text-green-400/70 mono">Inbox is clear</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Delegated -->
-            <div class="bg-panel border border-border rounded-xl p-5">
-                <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent2 mb-3 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-accent2"></span>
-                    Delegated
-                </h3>
-                {% if delegated %}
-                <div class="space-y-3">
-                    {% set ns = namespace(current_assignee='') %}
-                    {% for task in delegated %}
-                        {% if task.assignee != ns.current_assignee %}
-                            {% if ns.current_assignee %}</div>{% endif %}
-                            <div>
-                            <div class="flex items-center gap-2 mb-1"><span class="w-5 h-5 rounded-full bg-accent2/20 flex items-center justify-center text-[10px] mono font-bold text-accent2">{{ task.assignee[0].upper() }}</span><span class="text-[10px] mono text-muted">{{ task.assignee }}</span></div>
-                            <div class="space-y-1">
-                            {% set ns.current_assignee = task.assignee %}
-                        {% endif %}
-                        <a href="/tasks/{{ task.id }}" class="block bg-surface border-l-2 border-accent2/40 rounded-r-lg p-3 no-underline hover:border-accent transition-colors ml-7">
-                            <h4 class="text-xs text-text font-medium">{{ task.title }}</h4>
-                        </a>
-                    {% endfor %}
-                    </div></div>
-                {% else %}
-                <div class="border border-dashed border-border/50 rounded-lg p-5 text-center">
-                    <p class="text-xs text-muted mono">Nothing delegated</p>
                 </div>
                 {% endif %}
             </div>

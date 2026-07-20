@@ -4,12 +4,17 @@ from datetime import date, datetime, timezone
 
 from flask import Blueprint, flash, g, redirect, render_template, request, send_file, url_for
 
-from app.models import Project, Task, db
+from app.models import AppSettings, Project, Task, db
 
 tasks_bp = Blueprint("tasks", __name__)
 
-STATUSES = ["backlog", "active", "blocked", "delegated", "done"]
-PRIORITIES = ["P0", "P1", "P2"]
+STATUSES = ["backlog", "active", "blocked", "done"]
+
+
+def get_priorities():
+    """Return the configured priority levels from AppSettings."""
+    settings = AppSettings.get()
+    return settings.get_priorities()
 RECURRENCES = ["", "daily", "weekly", "monthly"]
 
 # Columns that can be sorted server-side
@@ -58,7 +63,7 @@ def build_task_query():
         query = query.filter(Task.status == status)
     elif status == "inbox":
         query = query.filter(Task.project_id.is_(None))
-    if priority and priority in PRIORITIES:
+    if priority and priority in get_priorities():
         query = query.filter(Task.priority == priority)
     if project_id:
         query = query.filter(Task.project_id == int(project_id))
@@ -132,7 +137,7 @@ def list_tasks():
         pagination=pagination,
         projects=projects,
         statuses=STATUSES,
-        priorities=PRIORITIES,
+        priorities=get_priorities(),
         assignees=assignees,
         all_tags=all_tags,
         today_date=date.today(),
@@ -247,7 +252,8 @@ def _find_related_captures(query_text, exclude_ids=None, limit=5):
 def detail(task_id):
     from app.models import User
 
-    task = g.scoped_query(Task).get_or_404(task_id)
+    from app.models import scoped_get
+    task = scoped_get(Task, task_id, g.current_user)
     projects = g.scoped_query(Project).order_by(Project.name).all()
     assignees = sorted(set(t.assignee for t in g.scoped_query(Task).filter(Task.assignee.isnot(None)).all() if t.assignee))
     all_users = User.query.order_by(User.username).all()
@@ -267,7 +273,7 @@ def detail(task_id):
         projects=projects,
         assignees=assignees,
         statuses=STATUSES,
-        priorities=PRIORITIES,
+        priorities=get_priorities(),
         recurrences=RECURRENCES,
         related_captures=related_captures,
         all_tasks=all_tasks,
@@ -277,7 +283,8 @@ def detail(task_id):
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["PATCH"])
 def update(task_id):
-    task = g.scoped_query(Task).get_or_404(task_id)
+    from app.models import scoped_get
+    task = scoped_get(Task, task_id, g.current_user)
     data = request.get_json(silent=True) or {}
 
     old_status = task.status
@@ -313,7 +320,7 @@ def update(task_id):
             new_dep = int(new_dep)
             if new_dep == task.id:
                 return {"error": "A task cannot depend on itself"}, 400
-            dep_task = g.scoped_query(Task).get(new_dep)
+            dep_task = db.session.get(Task, new_dep)
             if not dep_task:
                 return {"error": "Dependency task not found"}, 404
             if task.would_create_cycle(new_dep):
@@ -337,7 +344,8 @@ def delete(task_id):
         if _method != "DELETE":
             return redirect(url_for("tasks.detail", task_id=task_id))
 
-    task = g.scoped_query(Task).get_or_404(task_id)
+    from app.models import scoped_get
+    task = scoped_get(Task, task_id, g.current_user)
     title = task.title
     db.session.delete(task)
     db.session.commit()

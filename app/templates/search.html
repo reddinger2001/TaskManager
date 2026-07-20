@@ -35,7 +35,7 @@
         <a href="/tasks/{{ t.id }}" class="block px-4 py-3 hover:bg-surface/50 transition-colors">
             <div class="flex items-start gap-3">
                 <span class="mt-0.5 w-2 h-2 rounded-full flex-shrink-0"
-                      style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                      style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
                 <div class="flex-1 min-w-0">
                     <div class="text-sm text-text {% if t.status == 'done' %}line-through text-muted{% endif %} mb-1">
                         {{ highlight(t.title, q) }}

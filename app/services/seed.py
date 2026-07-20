@@ -9,30 +9,64 @@ from datetime import date, timedelta
 logger = logging.getLogger(__name__)
 
 
+def get_system_project_id(app):
+    """Return the ID of the 'System' project, creating it if needed.
+
+    Used as a parent for activity logs (which require a project_id or task_id).
+    """
+    from app.models import Project, User, db
+
+    with app.app_context():
+        system_proj = Project.query.filter_by(name="System").first()
+        if system_proj:
+            return system_proj.id
+
+        # Create it — find first admin to own it
+        admin = User.query.filter_by(is_admin=True).first()
+        if not admin:
+            return None
+
+        system_proj = Project(
+            name="System",
+            description="Activity log — created by the system",
+            color="#6b7280",
+            user_id=admin.id,
+        )
+        db.session.add(system_proj)
+        db.session.commit()
+        return system_proj.id
+
+
 def seed_if_empty(app):
     """Populate the database with tutorial tasks if it is empty.
 
-    Only runs when there are zero projects and zero tasks — i.e. a fresh install.
+    Only runs when an admin user exists but there are no projects yet —
+    i.e. after the setup wizard has created the first account.
     Creates 3 sample projects and ~12 tasks demonstrating the workflow:
     inbox capture → triage → active work → dependencies → done.
     """
     from app.models import Project, Task, User, db
 
     with app.app_context():
-        if User.query.count() > 0:
+        admin = User.query.filter_by(is_admin=True).first()
+        if not admin:
+            return  # No admin yet — setup wizard hasn't run
+        if Project.query.count() > 0:
             return  # Database already has data
 
         today = date.today()
 
         logger.info("Seeding database with tutorial data...")
 
-        # --- Admin user ---
-        admin = User(username="admin", is_admin=True)
-        admin.set_password("admin")
-        db.session.add(admin)
+        # --- System project for activity logs ---
+        system_proj = Project(
+            name="System",
+            description="Activity log — created by the system",
+            color="#6b7280",
+            user_id=admin.id,
+        )
+        db.session.add(system_proj)
         db.session.flush()
-
-        logger.info("Created admin user (username: admin, password: admin)")
 
         # --- Projects ---
         proj_personal = Project(
@@ -94,7 +128,7 @@ def seed_if_empty(app):
                 ),
                 user_id=admin.id,
                 status="active",
-                priority="P3",
+                priority="P2",
                 project_id=proj_personal.id,
                 due_date=today + timedelta(days=7),
             ),
@@ -156,8 +190,7 @@ def seed_if_empty(app):
                     "**Priority levels:**\n"
                     "- P0: On Fire — do it now\n"
                     "- P1: High — important, schedule soon\n"
-                    "- P2: Medium — normal work\n"
-                    "- P3: Low — nice to have"
+                    "- P2: Medium — normal work"
                 ),
                 user_id=admin.id,
                 status="backlog",
@@ -174,15 +207,15 @@ def seed_if_empty(app):
                 project_id=proj_work.id,
                 due_date=today + timedelta(days=45),
             ),
-            # Delegated
+            # Assigned
             Task(
                 title="👤 Review PR #42 — assigned to Sarah",
                 description=(
-                    "This task is **delegated** to Sarah. Delegated tasks appear in their own section on the dashboard.\n\n"
-                    "Use this for tasks you've assigned to someone else but still need to track."
+                    "This task is assigned to Sarah. Use the Assignee field to track who is working on a task.\n\n"
+                    "Filter by assignee on the Kanban board or in the task list."
                 ),
                 user_id=admin.id,
-                status="delegated",
+                status="backlog",
                 assignee="Sarah",
                 project_id=proj_work.id,
             ),
@@ -195,7 +228,6 @@ def seed_if_empty(app):
                 ),
                 user_id=admin.id,
                 status="backlog",
-                priority="P3",
                 project_id=proj_someday.id,
             ),
             Task(
@@ -203,7 +235,6 @@ def seed_if_empty(app):
                 user_id=admin.id,
                 description="Another someday idea.",
                 status="backlog",
-                priority="P3",
                 project_id=proj_someday.id,
             ),
         ]

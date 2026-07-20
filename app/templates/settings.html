@@ -43,6 +43,26 @@
         </dl>
     </div>
 
+    <!-- Priority Levels (admin only) -->
+    {% if current_user_is_admin %}
+    <div class="bg-panel border border-border rounded-lg p-5 mb-6">
+        <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent mb-2">Priority Levels</h3>
+        <p class="text-xs text-muted mb-4">Comma-separated list. These values appear in filters, the quick-capture modal, and the dashboard.</p>
+        <form method="post" action="/settings/priorities">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="flex items-center gap-3">
+                <input type="text" name="priorities" value="{{ priorities | join(', ') }}"
+                       placeholder="P0, P1, P2"
+                       class="flex-1 px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
+                <button type="submit"
+                        class="px-4 py-1.5 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors">
+                    Update
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
     <!-- Users link -->
     <div class="bg-panel border border-border rounded-lg p-5 mb-6">
         <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent mb-2">Account &amp; Users</h3>
@@ -57,6 +77,7 @@
         <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent mb-2">Export Database</h3>
         <p class="text-xs text-muted mb-4">Download a copy of the SQLite database file. Use this to back up or migrate to another machine.</p>
         <form method="post" action="/settings/export-db">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit"
                     class="px-4 py-2 text-xs font-medium mono uppercase tracking-wider text-bg bg-accent rounded hover:bg-cyan-300 transition-colors">
                 ↓ Download Database
@@ -69,6 +90,7 @@
         <h3 class="text-xs font-bold mono uppercase tracking-wider text-accent mb-2">Import Database</h3>
         <p class="text-xs text-muted mb-4">Replace the current database with a .db file. A safety backup of your current DB is created automatically before import.</p>
         <form method="post" action="/settings/import-db" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex items-center gap-3">
                 <input type="file" name="db_file" accept=".db"
                        class="px-3 py-1.5 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:mono file:bg-panel file:text-muted file:hover:text-text cursor-pointer">

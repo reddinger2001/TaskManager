@@ -238,7 +238,7 @@
                     <!-- Status dot -->
                     <td class="px-4 py-2.5">
                         <span class="w-2 h-2 rounded-full inline-block"
-                              style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                              style="background: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
                     </td>
                     <!-- Title -->
                     <td class="px-4 py-2.5 text-text {% if t.status == 'done' %}line-through text-muted{% endif %}">
@@ -247,7 +247,7 @@
                     <!-- Status -->
                     <td class="px-4 py-2.5">
                         <span class="text-[10px] mono uppercase tracking-wider"
-                              style="color: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% elif t.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};">
+                              style="color: {% if t.status == 'done' %}#69f0ae{% elif t.status == 'active' %}#00e5ff{% elif t.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};">
                             {{ t.status }}
                         </span>
                     </td>

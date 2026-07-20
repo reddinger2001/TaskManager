@@ -13,7 +13,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 
 from app.extensions import init_extensions
-from app.models import User, db
+from app.models import Task, User, db
 
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -39,12 +39,17 @@ def create_app():
     # Flask-Login
     login_manager.init_app(app)
 
-    # Require login for all routes except /login and /static/
+    # Require login for all routes except /setup, /login, and /static/
     @app.before_request
     def require_login():
         from flask_login import current_user
         from flask import request
-        if not current_user.is_authenticated and request.endpoint not in ("auth.login", "static"):
+        if not current_user.is_authenticated:
+            if request.endpoint in ("auth.login", "auth.setup", "static"):
+                return None
+            # If no users exist yet, redirect to setup instead of login
+            if User.query.first() is None:
+                return redirect(url_for("auth.setup"))
             return redirect(url_for("auth.login", next=request.url))
 
     # Expose scoped_query and user info on g for use in views
@@ -55,6 +60,7 @@ def create_app():
         from app.models import scoped_query
         if current_user.is_authenticated:
             g.scoped_query = lambda model: scoped_query(model, current_user)
+            g.current_user = current_user
             g.current_user_id = current_user.id
             g.current_user_is_admin = current_user.is_admin
             g.current_username = current_user.username
@@ -98,6 +104,19 @@ def create_app():
     # In-app help system
     from app.views.help import help_bp
     app.register_blueprint(help_bp)
+
+    # Migrate: convert any remaining "delegated" tasks to "backlog"
+    with app.app_context():
+        count = Task.query.filter(Task.status == "delegated").update(
+            {Task.status: "backlog"}, synchronize_session=False
+        )
+        if count:
+            db.session.commit()
+            app.logger.info(f"Migrated {count} task(s) from 'delegated' to 'backlog'")
+
+    # Migrate: add multi-user support if upgrading from solo mode
+    from app.services.migrate import migrate_multi_user
+    migrate_multi_user(app)
 
     # Seed tutorial data on first run (fresh database only)
     from app.services.seed import seed_if_empty

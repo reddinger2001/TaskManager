@@ -1,0 +1,38 @@
+{% extends "help/base.html" %}
+{% set active_title = 'Multi-User Setup' %}
+
+{% block help_content %}
+<h1 class="text-xl font-bold mono tracking-wider text-text mb-4">MULTI-USER SETUP</h1>
+
+<div class="prose prose-invert max-w-none">
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">First-Time Setup</h2>
+<p class="text-sm text-muted leading-relaxed">When you start TaskManager for the first time, you'll be taken to a setup wizard. Create your admin account and define your priority levels (default: P0, P1, P2). The admin user can see all tasks, projects, and logs across the entire system.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Logging In &amp; Out</h2>
+<p class="text-sm text-muted leading-relaxed">After setup, you'll log in with your username and password on every session. Your session is stored in a signed cookie — no database overhead. Click <strong class="text-text">Logout</strong> in the header to end your session.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Admin vs Regular Users</h2>
+<p class="text-sm text-muted leading-relaxed">TaskManager has two roles:</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li><strong class="text-text">Admin</strong> — can see all tasks, projects, and logs. Can create and manage other users. Can share projects with team members.</li>
+    <li><strong class="text-text">Regular user</strong> — sees only their own items plus any projects explicitly shared with them. Can change their own password but cannot manage other users.</li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Project Sharing</h2>
+<p class="text-sm text-muted leading-relaxed">Admins can share projects with specific team members from the project detail page. Look for the <strong class="text-text">Share with</strong> section on a project's page.</p>
+<ul class="text-sm text-muted leading-relaxed space-y-1 list-disc ml-5">
+    <li>Shared projects appear in the team member's task lists, dashboard, and search results.</li>
+    <li>If you can see a shared project, you can edit its tasks — there is no "view-only" mode.</li>
+    <li><strong class="text-text">Personal projects</strong> (not shared with anyone) are visible only to the owner — not even admins can see personal items.</li>
+</ul>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Tasks Assigned to Other Users</h2>
+<p class="text-sm text-muted leading-relaxed">If a task is assigned to a team member (via the Assignee field matching their username), they can see that task even if it's in a project they don't otherwise have access to.</p>
+
+<div class="mt-6 bg-surface border border-accent/20 rounded-lg p-4">
+    <p class="text-xs mono text-accent"><strong>TIP:</strong> TaskManager is designed for local network use — think shared office machine or small team on the same LAN. There's no OAuth, SSO, or email invites.</p>
+</div>
+
+</div>
+{% endblock %}

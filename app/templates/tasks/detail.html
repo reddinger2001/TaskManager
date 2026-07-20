@@ -269,7 +269,7 @@
         <a href="/tasks/{{ rc.id }}" class="block px-4 py-2.5 hover:bg-surface/50 transition-colors">
             <div class="flex items-center gap-3">
                 <span class="w-2 h-2 rounded-full flex-shrink-0"
-                      style="background: {% if rc.status == 'done' %}#69f0ae{% elif rc.status == 'active' %}#00e5ff{% elif rc.status == 'blocked' %}#ff8a65{% elif rc.status == 'delegated' %}#7c4dff{% else %}#3a4a5c{% endif %};"></span>
+                      style="background: {% if rc.status == 'done' %}#69f0ae{% elif rc.status == 'active' %}#00e5ff{% elif rc.status == 'blocked' %}#ff8a65{% else %}#3a4a5c{% endif %};"></span>
                 <span class="text-sm text-text {% if rc.status == 'done' %}line-through text-muted{% endif %}">{{ rc.title }}</span>
                 <span class="text-[10px] mono text-muted ml-auto">{{ rc.created_at.strftime('%Y-%m-%d') }}</span>
             </div>

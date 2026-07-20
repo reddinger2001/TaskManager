@@ -103,10 +103,10 @@ class TestTaskDetail:
         assert b"Delete" in resp.data
 
     def test_task_detail_shows_status_options(self, client, populated_db):
-        """All 5 status options are available in the dropdown."""
+        """All 4 status options are available in the dropdown."""
         resp = client.get("/tasks/1")
         data = resp.data.decode()
-        for status in ["backlog", "active", "blocked", "delegated", "done"]:
+        for status in ["backlog", "active", "blocked", "done"]:
             assert status in data
 
     def test_task_detail_shows_priority_options(self, client, populated_db):

@@ -10,8 +10,6 @@
 <p class="text-sm text-muted leading-relaxed mb-3">Each task has one status. The workflow flows left to right:</p>
 
 <div class="flex items-center gap-2 mb-4 flex-wrap">
-    <span class="px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs mono text-yellow-400">Inbox</span>
-    <span class="text-muted">→</span>
     <span class="px-3 py-1.5 rounded-lg bg-gray-500/10 border border-gray-500/30 text-xs mono text-gray-400">Backlog</span>
     <span class="text-muted">→</span>
     <span class="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-xs mono text-accent">Active</span>
@@ -27,14 +25,18 @@
         </tr>
     </thead>
     <tbody class="text-muted">
-        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-yellow-400">Inbox</td><td>Untriaged — captured but not yet organized</td></tr>
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-gray-400">Backlog</td><td>Planned but not started yet</td></tr>
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent">Active</td><td>Currently working on this right now</td></tr>
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-orange-400">Blocked</td><td>Can't proceed until something else is done</td></tr>
-        <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent2">Delegated</td><td>Assigned to someone else</td></tr>
         <tr><td class="py-2 pr-4 text-green-400">Done</td><td>Completed</td></tr>
     </tbody>
 </table>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Inbox</h2>
+<p class="text-sm text-muted leading-relaxed mb-4">The Inbox is not a status — it's the set of tasks with no project assigned. Quick-captured tasks land here until you triage them into a project.</p>
+
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Assignees</h2>
+<p class="text-sm text-muted leading-relaxed mb-4">Use the Assignee field to track who is responsible for a task. Assigned tasks appear in the assignee's view even if they don't own the project. Filter by assignee on the Kanban board or in the task list.</p>
 
 <h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Priorities</h2>
 <table class="w-full text-xs mono mb-4">
@@ -48,7 +50,7 @@
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-red-400">P0</td><td>On fire — do it now, everything else waits</td></tr>
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-amber-400">P1</td><td>High — important, schedule soon</td></tr>
         <tr class="border-b border-border/50"><td class="py-2 pr-4 text-accent">P2</td><td>Medium — normal work</td></tr>
-        <tr><td class="py-2 pr-4 text-green-400">P3</td><td>Low — nice to have, do when convenient</td></tr>
+
     </tbody>
 </table>
 
@@ -62,7 +64,7 @@
     <li><strong class="text-text">Title</strong> — required, shown everywhere</li>
     <li><strong class="text-text">Description</strong> — rich notes (Markdown is stored but not rendered)</li>
     <li><strong class="text-text">Status</strong> — dropdown to change workflow state</li>
-    <li><strong class="text-text">Priority</strong> — P0 through P3 or none</li>
+    <li><strong class="text-text">Priority</strong> — P0 through P2 or none</li>
     <li><strong class="text-text">Start Date / Due Date</strong> — optional date range</li>
     <li><strong class="text-text">Assignee</strong> — name of the person responsible</li>
     <li><strong class="text-text">Project</strong> — which project this belongs to (or Inbox)</li>

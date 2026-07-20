@@ -26,7 +26,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 PROJECT_DIR = Path(__file__).parent.resolve()
 ARCHIVE_NAME = f"taskmanager-{VERSION}.zip"
 

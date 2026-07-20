@@ -11,6 +11,8 @@ HELP_PAGES = {
     "projects": "Projects",
     "search": "Search",
     "dependencies": "Dependencies",
+    "multi-user": "Multi-User Setup",
+    "user-management": "User Management",
     "backup-restore": "Backup & Restore",
 }
 

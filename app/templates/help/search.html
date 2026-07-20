@@ -6,22 +6,14 @@
 
 <div class="prose prose-invert max-w-none">
 
-<p class="text-sm text-muted leading-relaxed mb-4">TaskManager has two search engines running side by side:</p>
+<p class="text-sm text-muted leading-relaxed mb-4">TaskManager uses SQLite's full-text search (FTS5) to search across tasks, projects, and logs.</p>
 
-<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Keyword Search (FTS5)</h2>
-<p class="text-sm text-muted leading-relaxed">Always enabled. Searches task titles, descriptions, and tags using SQLite's full-text search. Fast, no dependencies.</p>
-<p class="text-sm text-muted leading-relaxed mt-2">Use the search bar in the header to find tasks by keyword.</p>
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Keyword Search</h2>
+<p class="text-sm text-muted leading-relaxed">Searches task titles, descriptions, and tags. Also searches project names and log entries by title and notes.</p>
+<p class="text-sm text-muted leading-relaxed mt-2">Use the search bar in the header to find anything by keyword. Results are grouped by type: Tasks, Projects, and Logs.</p>
 
-<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Semantic Search (sqlite-vec)</h2>
-<p class="text-sm text-muted leading-relaxed">Optional. Uses an AI embedding model (all-MiniLM-L6-v2 via ONNX) to understand the <em>meaning</em> of your search, not just exact words.</p>
-<p class="text-sm text-muted leading-relaxed mt-2">For example, searching "things I need to fix urgently" will find P0 tasks even if they don't contain those exact words.</p>
-
-<div class="bg-surface border border-border rounded-lg p-4 mb-4">
-    <p class="text-xs mono text-muted"><strong>NOTE:</strong> Semantic search is disabled by default because the embedding model adds ~65MB to the package. To enable it, set the environment variable <code class="text-accent">EMBEDDING_ENABLED=true</code> before starting the app.</p>
-</div>
-
-<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Combined Search</h2>
-<p class="text-sm text-muted leading-relaxed">When both are enabled, results are ranked by a combination of keyword match score and semantic similarity. The best matches appear first.</p>
+<h2 class="text-sm font-bold mono text-accent mt-6 mb-3">Related Captures</h2>
+<p class="text-sm text-muted leading-relaxed">When viewing a task detail, the "Related Captures" section uses keyword search to find inbox tasks that share similar content — useful for connecting related thoughts.</p>
 
 </div>
 {% endblock %}

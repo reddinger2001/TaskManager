@@ -34,6 +34,17 @@ def app(test_db_path):
     # Disable CSRF in tests — test client doesn't carry tokens
     test_app.config["WTF_CSRF_ENABLED"] = False
 
+    # Ensure a test admin user exists for the client fixture
+    with test_app.app_context():
+        from app.models import User, AppSettings, db
+        if not User.query.filter_by(username="admin").first():
+            admin = User(username="admin", is_admin=True)
+            admin.set_password("admin")
+            db.session.add(admin)
+            db.session.commit()
+        # Ensure AppSettings exists so get_priorities() doesn't fail
+        AppSettings.get()
+
     yield test_app
 
 
@@ -57,6 +68,7 @@ def client(app):
     def setup_test_user():
         admin = User.query.filter_by(username="admin").first()
         g.scoped_query = lambda model: scoped_query(model, admin)
+        g.current_user = admin
         g.current_user_id = admin.id
         g.current_user_is_admin = True
         g.current_username = "admin"
