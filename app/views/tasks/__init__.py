@@ -2,7 +2,7 @@ import csv
 import io
 from datetime import date, datetime, timezone
 
-from flask import Blueprint, flash, g, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, current_app, flash, g, redirect, render_template, request, send_file, url_for
 
 from app.models import AppSettings, Project, Task, db
 
