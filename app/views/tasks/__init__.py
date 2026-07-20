@@ -380,10 +380,12 @@ def bulk_status():
         return redirect(url_for("tasks.list_tasks"))
 
     count = 0
+    skipped = 0
     for tid in task_ids:
         try:
             task = scoped_get(Task, tid, g.current_user)
             if task.status == new_status:
+                skipped += 1
                 continue
             task.status = new_status
             if new_status == "done":
@@ -391,8 +393,11 @@ def bulk_status():
             else:
                 task.completed_at = None
             count += 1
-        except Exception:
-            pass  # Skip tasks not in scope
+        except Exception as e:
+            current_app.logger.warning(f"Bulk status failed for task {tid}: {e}")
     db.session.commit()
-    flash(f"{count} task(s) updated to {new_status}")
+    if count == 0 and skipped > 0:
+        flash(f"All {len(task_ids)} task(s) already had status {new_status}")
+    else:
+        flash(f"{count} task(s) updated to {new_status}")
     return redirect(url_for("tasks.list_tasks"))

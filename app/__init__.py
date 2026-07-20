@@ -74,10 +74,11 @@ def create_app():
         """Make user info and app settings available in all templates."""
         from flask import g
         from app.models import AppSettings, Project
+        current_user_id = getattr(g, 'current_user_id', None)
         return {
             'current_username': getattr(g, 'current_username', 'anonymous'),
             'current_user_is_admin': getattr(g, 'current_user_is_admin', False),
-            'projects': Project.query.order_by(Project.name).all() if g.current_user_id else [],
+            'projects': Project.query.order_by(Project.name).all() if current_user_id else [],
             'priorities': AppSettings.get().get_priorities(),
         }
 

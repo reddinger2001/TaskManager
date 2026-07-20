@@ -17,6 +17,7 @@
      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-panel border border-border rounded-lg px-5 py-3 flex items-center gap-4 shadow-xl">
     <span class="text-xs mono text-muted"><span x-text="selectedTasks.length"></span> selected</span>
     <form method="post" action="/tasks/bulk-status" class="flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
         <select name="status" class="px-2 py-1 text-xs mono bg-surface border border-border rounded text-text focus:outline-none focus:border-accent/40">
             {% for s in statuses %}
             <option value="{{ s }}">{{ s }}</option>
@@ -28,6 +29,7 @@
         </template>
     </form>
     <form method="post" action="/tasks/bulk-delete" class="flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
         <button type="submit" class="px-3 py-1 text-xs mono uppercase tracking-wider bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors" onclick="return confirm('Delete selected tasks? This cannot be undone.')">Delete</button>
         <template x-for="taskId in selectedTasks">
             <input type="hidden" name="task_ids" :value="taskId">
